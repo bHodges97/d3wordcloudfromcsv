@@ -1,0 +1,16 @@
+{
+  "name": "jswordcloud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^16.3.0",
+    "d3": "^5.9.7",
+    "d3-cloud": "^1.2.5"
+  }
+}
