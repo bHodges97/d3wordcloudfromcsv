@@ -32,7 +32,7 @@ function load_data(data){
 		var related = splitted.slice(2).join(",");
 		related_papers = related.substring(2,related.length-2);//remove "{}"
 		if(count > 10 && word.length > 2){
-			words.push({text:word,size:Math.ceil(count/10),related: related_papers});
+			words.push({text:word,size:Math.ceil(count/50),related: related_papers});
 		}
 	}
 	//Draw Wordcloud
@@ -40,7 +40,7 @@ function load_data(data){
 		.size([1000, 800])
 		.words(words)
 		.padding(5)
-		.rotate(function() { return ~~(Math.random() * 1) * 90; })
+		.rotate(function() { return ~~(Math.random() * 2) * 90; })
 		.font("Impact")
 		.fontSize(function(d) { return d.size; })
 		.on("end", draw);
@@ -74,7 +74,8 @@ function show_related(d,i){
 	var pairs = d.related.split(", ")
 	for (var i = 0;i < pairs.length - 1; i++) {
 		kv = pairs[i].split(": ");
-		data.push(kv[1]+papers[kv[0]]);
+		var start = "count: "+kv[1]+"<br>"
+		data.push(start+papers[kv[0]]);
 	}
 	d3.select('body').select('ul').remove();
 	var ul = d3.select('body').append('ul');
