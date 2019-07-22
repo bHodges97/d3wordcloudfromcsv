@@ -1,4 +1,4 @@
-module.exports = bh_wordcloud = class bh_wordcloud{
+module.exports = bh_wordcloud = class{
 	constructor(){
 		this.d3_select = require("d3-selection").select;
 		this.cloud = require("d3-cloud");
