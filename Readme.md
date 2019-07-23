@@ -6,7 +6,7 @@
 id, HTML
 #### freq_data.csv
 word, count
-### related_papers.csv
+#### related_papers.csv
 word, JSON of {paper_id: count, ...}
 
 ### Build

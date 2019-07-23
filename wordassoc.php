@@ -2,7 +2,7 @@
 $q = $_GET['word'];
 
 function get_related($word){
-	if (($handle = fopen("../related_papers.csv","r")) !== FALSE) {
+	if (($handle = fopen("related_papers.csv","r")) !== FALSE) {
 		while (($data = fgetcsv($handle, ",")) !== FALSE) {
 			if($data[0] == $word){
 				return $data[1];
@@ -13,7 +13,7 @@ function get_related($word){
 	}
 }
 function getHTML($line){
-	$handle = fopen("../papers.csv", "r");
+	$handle = fopen("papers.csv", "r");
 	$row = 1;
 	while (($data = fgetcsv($handle, ",")) !== FALSE) {
 		if($row == $line){
