@@ -5,15 +5,13 @@
 #### papers.csv
 id, HTML
 #### freq_data.csv
-term, count, {paper_id: count, ...}
+word, count
+### related_papers.csv
+word, JSON of {paper_id: count, ...}
 
 ### Build
-In src/ folder:
-```
-$ npm install
-$ browserify index.js -o bundle.js
-
 For a local new installation of npm:
+```
 $ cd src
 $ npm install
 $ ./node_modules/browserify/bin/cmd.js index.js > bundle.js
