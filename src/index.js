@@ -1,12 +1,16 @@
 module.exports = bh_wordcloud = class{
-	constructor(){
+	constructor(url, tag, width, height){
 		this.d3_select = require("d3-selection").select;
 		this.cloud = require("d3-cloud");
-		this.papers = {}
+		this.papers = {};
+    this.url = url;
+    this.tag = "#" + tag;
+    this.width = width;
+    this.height = height;
 	}
 
 	start(){
-		fetch('papers.csv')
+		fetch(this.url + '/papers.csv')
 			.then(response => response.text())
 			.then(text => this.load_papers(text))
 			.then(response => response.text())
@@ -23,12 +27,13 @@ module.exports = bh_wordcloud = class{
 			//html = html.replace(/""/g,'\"'); not needed?
 			this.papers[splitted[0]] = html
 		}
-		return fetch('freq_data.csv')
+		return fetch(this.url + '/freq_data.csv')
 	}
 
 	load_data(data){
 		var arr = data.split("\n");
 		var words = [];
+    var size_divisor = 200/parseInt(arr[0].split(",")[1]); //
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
 			var word = splitted[0].substring(1,splitted[0].length-1);//remove quotes
@@ -36,16 +41,16 @@ module.exports = bh_wordcloud = class{
 			var related = splitted.slice(2).join(",");
 			var related_papers = related.substring(2,related.length-2);//remove "{}"
 			if(count > 10 && word.length > 2){
-				words.push({text:word,size:Math.ceil(count/50),related: related_papers});
+				words.push({text:word,size:Math.ceil(count*size_divisor),related: related_papers});
 			}
 		}
 		return words
 	}
-	
+
 	show_wordcloud(words){
 		//Draw Wordcloud
 		this.layout = this.cloud()
-			.size([1000, 800])
+			.size([this.width, this.height])
 			.words(words)
 			.padding(5)
 			.rotate(function() { return ~~(Math.random() * 2) * 90; })
@@ -58,7 +63,7 @@ module.exports = bh_wordcloud = class{
 
 	draw(words) {
 		var layout = this.layout
-		this.d3_select("body").append("svg")
+		this.d3_select(this.tag).append("svg")
 		  .attr("width", layout.size()[0])
 		  .attr("height", layout.size()[1])
 		.append("g")
@@ -84,8 +89,8 @@ module.exports = bh_wordcloud = class{
 			var start = "count: "+kv[1]+"<br>"
 			data.push(start+this.papers[kv[0]]);
 		}
-		this.d3_select('body').select('ul').remove();
-		var ul = this.d3_select('body').append('ul');
+		this.d3_select(this.tag).select('ul').remove();
+		var ul = this.d3_select(this.tag).append('ul');
 		ul.selectAll('li')
 		.data(data)
 		.enter()
@@ -93,6 +98,3 @@ module.exports = bh_wordcloud = class{
 		.html(String);
 	}
 }
-
-
-

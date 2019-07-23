@@ -12,4 +12,9 @@ In src/ folder:
 ```
 $ npm install
 $ browserify index.js -o bundle.js
+
+For a local new installation of npm:
+$ cd src
+$ npm install
+$ ./node_modules/browserify/bin/cmd.js index.js > bundle.js
 ```
