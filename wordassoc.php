@@ -31,7 +31,7 @@ foreach ($data as $index => $count) {
 	$out .= "<li> Count:" . $count . " <br> " . $html . "</li>"; 
 }
 
-echo $out
+echo "<ul>" . $out . "</ul>"
 
 
 

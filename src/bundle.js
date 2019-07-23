@@ -5,7 +5,7 @@ module.exports = bh_wordcloud = class{
 		this.cloud = require("d3-cloud");
 		this.papers = {};
 		this.url = url;
-		this.tag = "#" + tag;
+		this.div_wordcloud = this.d3_select("#"+tag);
 		this.width = width;
 		this.height = height;
 	}
@@ -64,7 +64,7 @@ module.exports = bh_wordcloud = class{
 
 	draw(words) {
 		var layout = this.layout
-		this.d3_select(this.tag).append("svg")
+		this.div_wordcloud.append("svg")
 		  .attr("width", layout.size()[0])
 		  .attr("height", layout.size()[1])
 		.append("g")
@@ -80,13 +80,13 @@ module.exports = bh_wordcloud = class{
 		  })
 		  .text(function(d) { return d.text; })
 		 .on("click",(d,i)=>this.show_related(d,i));
+		this.div_papers = this.div_wordcloud.append("div");
 	}
 
 	show_related(d,i){
-		this.d3_select(this.tag).select('ul').remove();
 		fetch('wordassoc.php?word='+d.text)
 		  .then(responce => responce.text())
-		  .then(text=>this.d3_select(this.tag).append('ul').html(text));
+		  .then(text=>this.div_papers.html(text));
 	}
 }
 
