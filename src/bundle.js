@@ -4,16 +4,16 @@ module.exports = bh_wordcloud = class{
 		this.d3_select = require("d3-selection").select;
 		this.cloud = require("d3-cloud");
 		this.papers = {};
-    this.url = url;
-    this.tag = "#" + tag;
-    this.width = width;
-    this.height = height;
+		this.url = url;
+		this.tag = "#" + tag;
+		this.width = width;
+		this.height = height;
 	}
 
 	start(){
-		fetch(this.url + '/papers.csv')
-			.then(response => response.text())
-			.then(text => this.load_papers(text))
+		fetch(this.url + '/freq_data.csv')
+			//.then(response => response.text())
+			//.then(text => this.load_papers(text))
 			.then(response => response.text())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(data))
@@ -34,13 +34,13 @@ module.exports = bh_wordcloud = class{
 	load_data(data){
 		var arr = data.split("\n");
 		var words = [];
-    var size_divisor = 200/parseInt(arr[0].split(",")[1]); //
+	    var size_divisor = 200/parseInt(arr[0].split(",")[1]); //
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
-			var word = splitted[0].substring(1,splitted[0].length-1);//remove quotes
+			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
 			var count = parseInt(splitted[1]);
 			var related = splitted.slice(2).join(",");
-			var related_papers = related.substring(2,related.length-2);//remove "{}"
+			var related_papers = related.substring(1,related.length-1);//remove "{}"
 			if(count > 10 && word.length > 2){
 				words.push({text:word,size:Math.ceil(count*size_divisor),related: related_papers});
 			}
@@ -83,21 +83,10 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_related(d,i){
-    console.log("HERE");
-		var data = []
-		var pairs = d.related.split(", ")
-		for (var i = 0;i < pairs.length - 1; i++) {
-			var kv = pairs[i].split(": ");
-			var start = "count: "+kv[1]+"<br>"
-			data.push(start+this.papers[kv[0]]);
-		}
 		this.d3_select(this.tag).select('ul').remove();
-		var ul = this.d3_select(this.tag).append('ul');
-		ul.selectAll('li')
-		.data(data)
-		.enter()
-		.append('li')
-		.html(String);
+		fetch('src/wordassoc.php?word='+d.text)
+		  .then(responce => responce.text())
+		  .then(text=>this.d3_select(this.tag).append('ul').html(text));
 	}
 }
 
