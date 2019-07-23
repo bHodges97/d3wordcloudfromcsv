@@ -84,7 +84,7 @@ module.exports = bh_wordcloud = class{
 
 	show_related(d,i){
 		this.d3_select(this.tag).select('ul').remove();
-		fetch('src/wordassoc.php?word='+d.text)
+		fetch('wordassoc.php?word='+d.text)
 		  .then(responce => responce.text())
 		  .then(text=>this.d3_select(this.tag).append('ul').html(text));
 	}
