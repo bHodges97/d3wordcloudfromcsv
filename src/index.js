@@ -1,8 +1,9 @@
 module.exports = bh_wordcloud = class{
 	constructor(url, tag, width, height){
 		this.d3_select = require("d3-selection").select;
+		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
 		this.cloud = require("d3-cloud");
-		this.papers = {};
+		this.random = require("seedrandom")(0); //if not seeding use random=Math.random
 		this.url = url;
 		this.div_wordcloud = this.d3_select("#"+tag);
 		this.width = width;
@@ -11,23 +12,9 @@ module.exports = bh_wordcloud = class{
 
 	start(){
 		fetch(this.url + '/freq_data.csv')
-			//.then(response => response.text())
-			//.then(text => this.load_papers(text))
 			.then(response => response.text())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(data))
-	}
-
-	load_papers(data){
-		var arr = data.split("\n");
-		for (var i = 0; i < arr.length-1; i++) {
-			var splitted = arr[i].split(",")
-			var html = splitted.slice(1).join(",");
-			html = html.substring(1,html.length-2);
-			//html = html.replace(/""/g,'\"'); not needed?
-			this.papers[splitted[0]] = html
-		}
-		return fetch(this.url + '/freq_data.csv')
 	}
 
 	load_data(data){
@@ -38,10 +25,8 @@ module.exports = bh_wordcloud = class{
 			var splitted = arr[i].split(",");
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
 			var count = parseInt(splitted[1]);
-			var related = splitted.slice(2).join(",");
-			var related_papers = related.substring(1,related.length-1);//remove "{}"
 			if(count > 10 && word.length > 2){
-				words.push({text:word,size:Math.ceil(count*size_divisor),related: related_papers});
+				words.push({text:word,size:Math.ceil(count*size_divisor)});
 			}
 		}
 		return words
@@ -49,11 +34,13 @@ module.exports = bh_wordcloud = class{
 
 	show_wordcloud(words){
 		//Draw Wordcloud
+		var random = this.random
 		this.layout = this.cloud()
 			.size([this.width, this.height])
+			.random(random)
 			.words(words)
 			.padding(5)
-			.rotate(function() { return ~~(Math.random() * 2) * 90; })
+			.rotate(function() { return ~~(random() * 2) * 90; })
 			.font("Impact")
 			.fontSize(function(d) { return d.size; })
 			.on("end",words=>this.draw(words));
@@ -62,7 +49,8 @@ module.exports = bh_wordcloud = class{
 	}
 
 	draw(words) {
-		var layout = this.layout
+		var layout = this.layout;
+		var colors = this.colors;
 		this.div_wordcloud.append("svg")
 		  .attr("width", layout.size()[0])
 		  .attr("height", layout.size()[1])
@@ -72,6 +60,7 @@ module.exports = bh_wordcloud = class{
 		  .data(words)
 		.enter().append("text")
 		  .style("font-size", function(d) { return d.size + "px"; })
+		  .attr("fill", (d,i) => colors[i%colors.length])
 		  .style("font-family", "Impact")
 		  .attr("text-anchor", "middle")
 		  .attr("transform", function(d) {
