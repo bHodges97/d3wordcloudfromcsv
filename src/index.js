@@ -59,27 +59,23 @@ module.exports = bh_wordcloud = class{
 	}
 
 	draw(words,e) {
-		var n = this.svg.selectAll("text").data(words, d=>d.text).enter().append("text");//, function(t) {
-		var dur = 600;
+		var n = this.svg.selectAll("text").data(words, d=>d.text).enter().append("text");
+		var dur = 1000;
 
 		n.attr("text-anchor", "middle")
-			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
 			.style("font-family", d => d.font)
 			.style("fill", (d,i) => this.colors[i % this.colors.length])
-			.style("font-size", "1px").transition().duration(dur).style("font-size",d=>d.size+"px")
+			.style("font-size", "1px")
 			.text(d => d.text)
 			.on("click",(d,i)=>this.show_related(d,i));
-		/*
-    	n.selectAll("text").transition().duration(dur)
-			.attr("font-size", d=>"1px")
+
+    	n.transition().duration(dur)
+			.style("font-size", d=>d.size+"px")
 			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
-			.style("fill-opacity",1);
 		
 		n.exit().transition().duration(dur)
-			.style("fill-opacity", 1e-6)
-			.attr("font-size","1px")
+			.style("font-size","1px")
 			.remove();
-		*/
 		
 	}
 
