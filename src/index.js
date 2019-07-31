@@ -1,5 +1,6 @@
 module.exports = bh_wordcloud = class{
 	constructor(url, tag, width, height){
+		require("d3-transition")
 		this.d3_select = require("d3-selection").select;
 		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
 		this.cloud = require("d3-cloud");
@@ -15,7 +16,7 @@ module.exports = bh_wordcloud = class{
 		fetch(this.url + '/freq_data.csv')
 			.then(response => response.text())
 			.then(text => this.load_data(text))
-			.then(data => this.show_wordcloud(data))
+			.then(data => this.show_wordcloud(data,this.width,this.height))
 	}
 
 	load_data(data){
@@ -33,45 +34,53 @@ module.exports = bh_wordcloud = class{
 		return words
 	}
 
-	show_wordcloud(words){
+	show_wordcloud(words,width,height){
 		//Draw Wordcloud
 		var random = this.random
 		var max_count = this.max_count
 		var max_size = this.max_size
-		this.layout = this.cloud()
-			.size([this.width, this.height])
+		var wordcloud = this.cloud()
+			.size([width,height])
 			.random(random)
 			.words(words)
 			.padding(5)
 			.rotate(function() { return ~~(random() * 2) * 90; })
 			.font("Impact")
 			.fontSize(function(d) { return Math.ceil(max_size*(d.size/max_count)); })
-			.on("end",words=>this.draw(words));
+			.on("end",(words,e)=>this.draw(words,e));
+		this.svg = this.div_wordcloud.append("svg")
+			.attr("width", width)
+		 	.attr("height", height)
+			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
+		this.div_papers = this.div_wordcloud.append("div");
 
-		this.layout.start();
+		wordcloud.start();
+		return wordcloud;
 	}
 
-	draw(words) {
-		var layout = this.layout;
-		var colors = this.colors;
-		this.div_wordcloud.append("svg")
-		  .attr("width", layout.size()[0])
-		  .attr("height", layout.size()[1])
-		.append("g")
-		  .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
-		.selectAll("text")
-		  .data(words)
-		.enter().append("text")
-		  .style("font-size", function(d) { return d.size + "px"; })
-		  .attr("fill", (d,i) => colors[i%colors.length])
-		  .style("font-family", "Impact")
-		  .attr("text-anchor", "middle")
-		  .attr("transform", function(d) {
-			return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-		  })
-		  .text(function(d) { return d.text; })
-		 .on("click",(d,i)=>this.show_related(d,i));
-		this.div_papers = this.div_wordcloud.append("div");
+	draw(words,e) {
+		var n = this.svg.selectAll("g text").data(words, d=>d.text);//, function(t) {
+		var dur = 600;
+
+		n.enter().append("text")
+			.style("font-family", d => d.font)
+			.style("fill", (d,i) => this.colors[i % this.colors.length])
+			.attr("text-anchor", "middle")
+			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+			.style("font-size", d=>d.size+"px")//.transition().duration(dur).style("font-size",d=>d.size+"px");
+			.text(d => d.text)
+			.on("click",(d,i)=>this.show_related(d,i));
+		/*
+    	n.transition().duration(dur).delay(100)
+			.attr("font-size",function(d){console.log("test");return "1px"})
+			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+			.style("fill-opacity",1);
+
+		n.exit().transition().duration(dur)
+			.style("fill-opacity", 1e-6)
+			.attr("font-size","1px")
+			.remove();
+		*/
 	}
 
 	show_related(d,i){

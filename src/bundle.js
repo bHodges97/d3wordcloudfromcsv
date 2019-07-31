@@ -1,6 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = bh_wordcloud = class{
 	constructor(url, tag, width, height){
+		require("d3-transition")
 		this.d3_select = require("d3-selection").select;
 		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
 		this.cloud = require("d3-cloud");
@@ -16,7 +17,7 @@ module.exports = bh_wordcloud = class{
 		fetch(this.url + '/freq_data.csv')
 			.then(response => response.text())
 			.then(text => this.load_data(text))
-			.then(data => this.show_wordcloud(data))
+			.then(data => this.show_wordcloud(data,this.width,this.height))
 	}
 
 	load_data(data){
@@ -34,45 +35,53 @@ module.exports = bh_wordcloud = class{
 		return words
 	}
 
-	show_wordcloud(words){
+	show_wordcloud(words,width,height){
 		//Draw Wordcloud
 		var random = this.random
 		var max_count = this.max_count
 		var max_size = this.max_size
-		this.layout = this.cloud()
-			.size([this.width, this.height])
+		var wordcloud = this.cloud()
+			.size([width,height])
 			.random(random)
 			.words(words)
 			.padding(5)
 			.rotate(function() { return ~~(random() * 2) * 90; })
 			.font("Impact")
 			.fontSize(function(d) { return Math.ceil(max_size*(d.size/max_count)); })
-			.on("end",words=>this.draw(words));
+			.on("end",(words,e)=>this.draw(words,e));
+		this.svg = this.div_wordcloud.append("svg")
+			.attr("width", width)
+		 	.attr("height", height)
+			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
+		this.div_papers = this.div_wordcloud.append("div");
 
-		this.layout.start();
+		wordcloud.start();
+		return wordcloud;
 	}
 
-	draw(words) {
-		var layout = this.layout;
-		var colors = this.colors;
-		this.div_wordcloud.append("svg")
-		  .attr("width", layout.size()[0])
-		  .attr("height", layout.size()[1])
-		.append("g")
-		  .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
-		.selectAll("text")
-		  .data(words)
-		.enter().append("text")
-		  .style("font-size", function(d) { return d.size + "px"; })
-		  .attr("fill", (d,i) => colors[i%colors.length])
-		  .style("font-family", "Impact")
-		  .attr("text-anchor", "middle")
-		  .attr("transform", function(d) {
-			return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-		  })
-		  .text(function(d) { return d.text; })
-		 .on("click",(d,i)=>this.show_related(d,i));
-		this.div_papers = this.div_wordcloud.append("div");
+	draw(words,e) {
+		var n = this.svg.selectAll("g text").data(words, d=>d.text);//, function(t) {
+		var dur = 600;
+
+		n.enter().append("text")
+			.style("font-family", d => d.font)
+			.style("fill", (d,i) => this.colors[i % this.colors.length])
+			.attr("text-anchor", "middle")
+			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+			.style("font-size", d=>d.size+"px")//.transition().duration(dur).style("font-size",d=>d.size+"px");
+			.text(d => d.text)
+			.on("click",(d,i)=>this.show_related(d,i));
+		/*
+    	n.transition().duration(dur).delay(100)
+			.attr("font-size",function(d){console.log("test");return "1px"})
+			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+			.style("fill-opacity",1);
+
+		n.exit().transition().duration(dur)
+			.style("fill-opacity", 1e-6)
+			.attr("font-size","1px")
+			.remove();
+		*/
 	}
 
 	show_related(d,i){
@@ -82,7 +91,7 @@ module.exports = bh_wordcloud = class{
 	}
 }
 
-},{"d3-cloud":2,"d3-scale-chromatic":6,"d3-selection":7,"seedrandom":8}],2:[function(require,module,exports){
+},{"d3-cloud":2,"d3-scale-chromatic":7,"d3-selection":8,"d3-transition":10,"seedrandom":11}],2:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g=(g.d3||(g.d3 = {}));g=(g.layout||(g.layout = {}));g.cloud = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Word cloud layout by Jason Davies, https://www.jasondavies.com/wordcloud/
@@ -1236,6 +1245,267 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 },{}],5:[function(require,module,exports){
+// https://d3js.org/d3-ease/ v1.0.5 Copyright 2018 Mike Bostock
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+typeof define === 'function' && define.amd ? define(['exports'], factory) :
+(factory((global.d3 = global.d3 || {})));
+}(this, (function (exports) { 'use strict';
+
+function linear(t) {
+  return +t;
+}
+
+function quadIn(t) {
+  return t * t;
+}
+
+function quadOut(t) {
+  return t * (2 - t);
+}
+
+function quadInOut(t) {
+  return ((t *= 2) <= 1 ? t * t : --t * (2 - t) + 1) / 2;
+}
+
+function cubicIn(t) {
+  return t * t * t;
+}
+
+function cubicOut(t) {
+  return --t * t * t + 1;
+}
+
+function cubicInOut(t) {
+  return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
+}
+
+var exponent = 3;
+
+var polyIn = (function custom(e) {
+  e = +e;
+
+  function polyIn(t) {
+    return Math.pow(t, e);
+  }
+
+  polyIn.exponent = custom;
+
+  return polyIn;
+})(exponent);
+
+var polyOut = (function custom(e) {
+  e = +e;
+
+  function polyOut(t) {
+    return 1 - Math.pow(1 - t, e);
+  }
+
+  polyOut.exponent = custom;
+
+  return polyOut;
+})(exponent);
+
+var polyInOut = (function custom(e) {
+  e = +e;
+
+  function polyInOut(t) {
+    return ((t *= 2) <= 1 ? Math.pow(t, e) : 2 - Math.pow(2 - t, e)) / 2;
+  }
+
+  polyInOut.exponent = custom;
+
+  return polyInOut;
+})(exponent);
+
+var pi = Math.PI,
+    halfPi = pi / 2;
+
+function sinIn(t) {
+  return 1 - Math.cos(t * halfPi);
+}
+
+function sinOut(t) {
+  return Math.sin(t * halfPi);
+}
+
+function sinInOut(t) {
+  return (1 - Math.cos(pi * t)) / 2;
+}
+
+function expIn(t) {
+  return Math.pow(2, 10 * t - 10);
+}
+
+function expOut(t) {
+  return 1 - Math.pow(2, -10 * t);
+}
+
+function expInOut(t) {
+  return ((t *= 2) <= 1 ? Math.pow(2, 10 * t - 10) : 2 - Math.pow(2, 10 - 10 * t)) / 2;
+}
+
+function circleIn(t) {
+  return 1 - Math.sqrt(1 - t * t);
+}
+
+function circleOut(t) {
+  return Math.sqrt(1 - --t * t);
+}
+
+function circleInOut(t) {
+  return ((t *= 2) <= 1 ? 1 - Math.sqrt(1 - t * t) : Math.sqrt(1 - (t -= 2) * t) + 1) / 2;
+}
+
+var b1 = 4 / 11,
+    b2 = 6 / 11,
+    b3 = 8 / 11,
+    b4 = 3 / 4,
+    b5 = 9 / 11,
+    b6 = 10 / 11,
+    b7 = 15 / 16,
+    b8 = 21 / 22,
+    b9 = 63 / 64,
+    b0 = 1 / b1 / b1;
+
+function bounceIn(t) {
+  return 1 - bounceOut(1 - t);
+}
+
+function bounceOut(t) {
+  return (t = +t) < b1 ? b0 * t * t : t < b3 ? b0 * (t -= b2) * t + b4 : t < b6 ? b0 * (t -= b5) * t + b7 : b0 * (t -= b8) * t + b9;
+}
+
+function bounceInOut(t) {
+  return ((t *= 2) <= 1 ? 1 - bounceOut(1 - t) : bounceOut(t - 1) + 1) / 2;
+}
+
+var overshoot = 1.70158;
+
+var backIn = (function custom(s) {
+  s = +s;
+
+  function backIn(t) {
+    return t * t * ((s + 1) * t - s);
+  }
+
+  backIn.overshoot = custom;
+
+  return backIn;
+})(overshoot);
+
+var backOut = (function custom(s) {
+  s = +s;
+
+  function backOut(t) {
+    return --t * t * ((s + 1) * t + s) + 1;
+  }
+
+  backOut.overshoot = custom;
+
+  return backOut;
+})(overshoot);
+
+var backInOut = (function custom(s) {
+  s = +s;
+
+  function backInOut(t) {
+    return ((t *= 2) < 1 ? t * t * ((s + 1) * t - s) : (t -= 2) * t * ((s + 1) * t + s) + 2) / 2;
+  }
+
+  backInOut.overshoot = custom;
+
+  return backInOut;
+})(overshoot);
+
+var tau = 2 * Math.PI,
+    amplitude = 1,
+    period = 0.3;
+
+var elasticIn = (function custom(a, p) {
+  var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau);
+
+  function elasticIn(t) {
+    return a * Math.pow(2, 10 * --t) * Math.sin((s - t) / p);
+  }
+
+  elasticIn.amplitude = function(a) { return custom(a, p * tau); };
+  elasticIn.period = function(p) { return custom(a, p); };
+
+  return elasticIn;
+})(amplitude, period);
+
+var elasticOut = (function custom(a, p) {
+  var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau);
+
+  function elasticOut(t) {
+    return 1 - a * Math.pow(2, -10 * (t = +t)) * Math.sin((t + s) / p);
+  }
+
+  elasticOut.amplitude = function(a) { return custom(a, p * tau); };
+  elasticOut.period = function(p) { return custom(a, p); };
+
+  return elasticOut;
+})(amplitude, period);
+
+var elasticInOut = (function custom(a, p) {
+  var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau);
+
+  function elasticInOut(t) {
+    return ((t = t * 2 - 1) < 0
+        ? a * Math.pow(2, 10 * t) * Math.sin((s - t) / p)
+        : 2 - a * Math.pow(2, -10 * t) * Math.sin((s + t) / p)) / 2;
+  }
+
+  elasticInOut.amplitude = function(a) { return custom(a, p * tau); };
+  elasticInOut.period = function(p) { return custom(a, p); };
+
+  return elasticInOut;
+})(amplitude, period);
+
+exports.easeLinear = linear;
+exports.easeQuad = quadInOut;
+exports.easeQuadIn = quadIn;
+exports.easeQuadOut = quadOut;
+exports.easeQuadInOut = quadInOut;
+exports.easeCubic = cubicInOut;
+exports.easeCubicIn = cubicIn;
+exports.easeCubicOut = cubicOut;
+exports.easeCubicInOut = cubicInOut;
+exports.easePoly = polyInOut;
+exports.easePolyIn = polyIn;
+exports.easePolyOut = polyOut;
+exports.easePolyInOut = polyInOut;
+exports.easeSin = sinInOut;
+exports.easeSinIn = sinIn;
+exports.easeSinOut = sinOut;
+exports.easeSinInOut = sinInOut;
+exports.easeExp = expInOut;
+exports.easeExpIn = expIn;
+exports.easeExpOut = expOut;
+exports.easeExpInOut = expInOut;
+exports.easeCircle = circleInOut;
+exports.easeCircleIn = circleIn;
+exports.easeCircleOut = circleOut;
+exports.easeCircleInOut = circleInOut;
+exports.easeBounce = bounceOut;
+exports.easeBounceIn = bounceIn;
+exports.easeBounceOut = bounceOut;
+exports.easeBounceInOut = bounceInOut;
+exports.easeBack = backInOut;
+exports.easeBackIn = backIn;
+exports.easeBackOut = backOut;
+exports.easeBackInOut = backInOut;
+exports.easeElastic = elasticOut;
+exports.easeElasticIn = elasticIn;
+exports.easeElasticOut = elasticOut;
+exports.easeElasticInOut = elasticInOut;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+
+},{}],6:[function(require,module,exports){
 // https://d3js.org/d3-interpolate/ v1.3.2 Copyright 2018 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-color')) :
@@ -1809,7 +2079,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{"d3-color":3}],6:[function(require,module,exports){
+},{"d3-color":3}],7:[function(require,module,exports){
 // https://d3js.org/d3-scale-chromatic/ v1.3.3 Copyright 2018 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-interpolate'), require('d3-color')) :
@@ -2309,7 +2579,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{"d3-color":3,"d3-interpolate":5}],7:[function(require,module,exports){
+},{"d3-color":3,"d3-interpolate":6}],8:[function(require,module,exports){
 // https://d3js.org/d3-selection/ v1.4.0 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -3298,7 +3568,1014 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+// https://d3js.org/d3-timer/ v1.0.9 Copyright 2018 Mike Bostock
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+typeof define === 'function' && define.amd ? define(['exports'], factory) :
+(factory((global.d3 = global.d3 || {})));
+}(this, (function (exports) { 'use strict';
+
+var frame = 0, // is an animation frame pending?
+    timeout = 0, // is a timeout pending?
+    interval = 0, // are any timers active?
+    pokeDelay = 1000, // how frequently we check for clock skew
+    taskHead,
+    taskTail,
+    clockLast = 0,
+    clockNow = 0,
+    clockSkew = 0,
+    clock = typeof performance === "object" && performance.now ? performance : Date,
+    setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) { setTimeout(f, 17); };
+
+function now() {
+  return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
+}
+
+function clearNow() {
+  clockNow = 0;
+}
+
+function Timer() {
+  this._call =
+  this._time =
+  this._next = null;
+}
+
+Timer.prototype = timer.prototype = {
+  constructor: Timer,
+  restart: function(callback, delay, time) {
+    if (typeof callback !== "function") throw new TypeError("callback is not a function");
+    time = (time == null ? now() : +time) + (delay == null ? 0 : +delay);
+    if (!this._next && taskTail !== this) {
+      if (taskTail) taskTail._next = this;
+      else taskHead = this;
+      taskTail = this;
+    }
+    this._call = callback;
+    this._time = time;
+    sleep();
+  },
+  stop: function() {
+    if (this._call) {
+      this._call = null;
+      this._time = Infinity;
+      sleep();
+    }
+  }
+};
+
+function timer(callback, delay, time) {
+  var t = new Timer;
+  t.restart(callback, delay, time);
+  return t;
+}
+
+function timerFlush() {
+  now(); // Get the current time, if not already set.
+  ++frame; // Pretend we’ve set an alarm, if we haven’t already.
+  var t = taskHead, e;
+  while (t) {
+    if ((e = clockNow - t._time) >= 0) t._call.call(null, e);
+    t = t._next;
+  }
+  --frame;
+}
+
+function wake() {
+  clockNow = (clockLast = clock.now()) + clockSkew;
+  frame = timeout = 0;
+  try {
+    timerFlush();
+  } finally {
+    frame = 0;
+    nap();
+    clockNow = 0;
+  }
+}
+
+function poke() {
+  var now = clock.now(), delay = now - clockLast;
+  if (delay > pokeDelay) clockSkew -= delay, clockLast = now;
+}
+
+function nap() {
+  var t0, t1 = taskHead, t2, time = Infinity;
+  while (t1) {
+    if (t1._call) {
+      if (time > t1._time) time = t1._time;
+      t0 = t1, t1 = t1._next;
+    } else {
+      t2 = t1._next, t1._next = null;
+      t1 = t0 ? t0._next = t2 : taskHead = t2;
+    }
+  }
+  taskTail = t0;
+  sleep(time);
+}
+
+function sleep(time) {
+  if (frame) return; // Soonest alarm already set, or will be.
+  if (timeout) timeout = clearTimeout(timeout);
+  var delay = time - clockNow; // Strictly less than if we recomputed clockNow.
+  if (delay > 24) {
+    if (time < Infinity) timeout = setTimeout(wake, time - clock.now() - clockSkew);
+    if (interval) interval = clearInterval(interval);
+  } else {
+    if (!interval) clockLast = clock.now(), interval = setInterval(poke, pokeDelay);
+    frame = 1, setFrame(wake);
+  }
+}
+
+function timeout$1(callback, delay, time) {
+  var t = new Timer;
+  delay = delay == null ? 0 : +delay;
+  t.restart(function(elapsed) {
+    t.stop();
+    callback(elapsed + delay);
+  }, delay, time);
+  return t;
+}
+
+function interval$1(callback, delay, time) {
+  var t = new Timer, total = delay;
+  if (delay == null) return t.restart(callback, delay, time), t;
+  delay = +delay, time = time == null ? now() : +time;
+  t.restart(function tick(elapsed) {
+    elapsed += total;
+    t.restart(tick, total += delay, time);
+    callback(elapsed);
+  }, delay, time);
+  return t;
+}
+
+exports.now = now;
+exports.timer = timer;
+exports.timerFlush = timerFlush;
+exports.timeout = timeout$1;
+exports.interval = interval$1;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+
+},{}],10:[function(require,module,exports){
+// https://d3js.org/d3-transition/ v1.2.0 Copyright 2019 Mike Bostock
+(function (global, factory) {
+typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-dispatch'), require('d3-timer'), require('d3-color'), require('d3-interpolate'), require('d3-selection'), require('d3-ease')) :
+typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-timer', 'd3-color', 'd3-interpolate', 'd3-selection', 'd3-ease'], factory) :
+(factory((global.d3 = global.d3 || {}),global.d3,global.d3,global.d3,global.d3,global.d3,global.d3));
+}(this, (function (exports,d3Dispatch,d3Timer,d3Color,d3Interpolate,d3Selection,d3Ease) { 'use strict';
+
+var emptyOn = d3Dispatch.dispatch("start", "end", "cancel", "interrupt");
+var emptyTween = [];
+
+var CREATED = 0;
+var SCHEDULED = 1;
+var STARTING = 2;
+var STARTED = 3;
+var RUNNING = 4;
+var ENDING = 5;
+var ENDED = 6;
+
+function schedule(node, name, id, index, group, timing) {
+  var schedules = node.__transition;
+  if (!schedules) node.__transition = {};
+  else if (id in schedules) return;
+  create(node, id, {
+    name: name,
+    index: index, // For context during callback.
+    group: group, // For context during callback.
+    on: emptyOn,
+    tween: emptyTween,
+    time: timing.time,
+    delay: timing.delay,
+    duration: timing.duration,
+    ease: timing.ease,
+    timer: null,
+    state: CREATED
+  });
+}
+
+function init(node, id) {
+  var schedule = get(node, id);
+  if (schedule.state > CREATED) throw new Error("too late; already scheduled");
+  return schedule;
+}
+
+function set(node, id) {
+  var schedule = get(node, id);
+  if (schedule.state > STARTED) throw new Error("too late; already running");
+  return schedule;
+}
+
+function get(node, id) {
+  var schedule = node.__transition;
+  if (!schedule || !(schedule = schedule[id])) throw new Error("transition not found");
+  return schedule;
+}
+
+function create(node, id, self) {
+  var schedules = node.__transition,
+      tween;
+
+  // Initialize the self timer when the transition is created.
+  // Note the actual delay is not known until the first callback!
+  schedules[id] = self;
+  self.timer = d3Timer.timer(schedule, 0, self.time);
+
+  function schedule(elapsed) {
+    self.state = SCHEDULED;
+    self.timer.restart(start, self.delay, self.time);
+
+    // If the elapsed delay is less than our first sleep, start immediately.
+    if (self.delay <= elapsed) start(elapsed - self.delay);
+  }
+
+  function start(elapsed) {
+    var i, j, n, o;
+
+    // If the state is not SCHEDULED, then we previously errored on start.
+    if (self.state !== SCHEDULED) return stop();
+
+    for (i in schedules) {
+      o = schedules[i];
+      if (o.name !== self.name) continue;
+
+      // While this element already has a starting transition during this frame,
+      // defer starting an interrupting transition until that transition has a
+      // chance to tick (and possibly end); see d3/d3-transition#54!
+      if (o.state === STARTED) return d3Timer.timeout(start);
+
+      // Interrupt the active transition, if any.
+      if (o.state === RUNNING) {
+        o.state = ENDED;
+        o.timer.stop();
+        o.on.call("interrupt", node, node.__data__, o.index, o.group);
+        delete schedules[i];
+      }
+
+      // Cancel any pre-empted transitions.
+      else if (+i < id) {
+        o.state = ENDED;
+        o.timer.stop();
+        o.on.call("cancel", node, node.__data__, o.index, o.group);
+        delete schedules[i];
+      }
+    }
+
+    // Defer the first tick to end of the current frame; see d3/d3#1576.
+    // Note the transition may be canceled after start and before the first tick!
+    // Note this must be scheduled before the start event; see d3/d3-transition#16!
+    // Assuming this is successful, subsequent callbacks go straight to tick.
+    d3Timer.timeout(function() {
+      if (self.state === STARTED) {
+        self.state = RUNNING;
+        self.timer.restart(tick, self.delay, self.time);
+        tick(elapsed);
+      }
+    });
+
+    // Dispatch the start event.
+    // Note this must be done before the tween are initialized.
+    self.state = STARTING;
+    self.on.call("start", node, node.__data__, self.index, self.group);
+    if (self.state !== STARTING) return; // interrupted
+    self.state = STARTED;
+
+    // Initialize the tween, deleting null tween.
+    tween = new Array(n = self.tween.length);
+    for (i = 0, j = -1; i < n; ++i) {
+      if (o = self.tween[i].value.call(node, node.__data__, self.index, self.group)) {
+        tween[++j] = o;
+      }
+    }
+    tween.length = j + 1;
+  }
+
+  function tick(elapsed) {
+    var t = elapsed < self.duration ? self.ease.call(null, elapsed / self.duration) : (self.timer.restart(stop), self.state = ENDING, 1),
+        i = -1,
+        n = tween.length;
+
+    while (++i < n) {
+      tween[i].call(node, t);
+    }
+
+    // Dispatch the end event.
+    if (self.state === ENDING) {
+      self.on.call("end", node, node.__data__, self.index, self.group);
+      stop();
+    }
+  }
+
+  function stop() {
+    self.state = ENDED;
+    self.timer.stop();
+    delete schedules[id];
+    for (var i in schedules) return; // eslint-disable-line no-unused-vars
+    delete node.__transition;
+  }
+}
+
+function interrupt(node, name) {
+  var schedules = node.__transition,
+      schedule$$1,
+      active,
+      empty = true,
+      i;
+
+  if (!schedules) return;
+
+  name = name == null ? null : name + "";
+
+  for (i in schedules) {
+    if ((schedule$$1 = schedules[i]).name !== name) { empty = false; continue; }
+    active = schedule$$1.state > STARTING && schedule$$1.state < ENDING;
+    schedule$$1.state = ENDED;
+    schedule$$1.timer.stop();
+    schedule$$1.on.call(active ? "interrupt" : "cancel", node, node.__data__, schedule$$1.index, schedule$$1.group);
+    delete schedules[i];
+  }
+
+  if (empty) delete node.__transition;
+}
+
+function selection_interrupt(name) {
+  return this.each(function() {
+    interrupt(this, name);
+  });
+}
+
+function tweenRemove(id, name) {
+  var tween0, tween1;
+  return function() {
+    var schedule$$1 = set(this, id),
+        tween = schedule$$1.tween;
+
+    // If this node shared tween with the previous node,
+    // just assign the updated shared tween and we’re done!
+    // Otherwise, copy-on-write.
+    if (tween !== tween0) {
+      tween1 = tween0 = tween;
+      for (var i = 0, n = tween1.length; i < n; ++i) {
+        if (tween1[i].name === name) {
+          tween1 = tween1.slice();
+          tween1.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    schedule$$1.tween = tween1;
+  };
+}
+
+function tweenFunction(id, name, value) {
+  var tween0, tween1;
+  if (typeof value !== "function") throw new Error;
+  return function() {
+    var schedule$$1 = set(this, id),
+        tween = schedule$$1.tween;
+
+    // If this node shared tween with the previous node,
+    // just assign the updated shared tween and we’re done!
+    // Otherwise, copy-on-write.
+    if (tween !== tween0) {
+      tween1 = (tween0 = tween).slice();
+      for (var t = {name: name, value: value}, i = 0, n = tween1.length; i < n; ++i) {
+        if (tween1[i].name === name) {
+          tween1[i] = t;
+          break;
+        }
+      }
+      if (i === n) tween1.push(t);
+    }
+
+    schedule$$1.tween = tween1;
+  };
+}
+
+function transition_tween(name, value) {
+  var id = this._id;
+
+  name += "";
+
+  if (arguments.length < 2) {
+    var tween = get(this.node(), id).tween;
+    for (var i = 0, n = tween.length, t; i < n; ++i) {
+      if ((t = tween[i]).name === name) {
+        return t.value;
+      }
+    }
+    return null;
+  }
+
+  return this.each((value == null ? tweenRemove : tweenFunction)(id, name, value));
+}
+
+function tweenValue(transition, name, value) {
+  var id = transition._id;
+
+  transition.each(function() {
+    var schedule$$1 = set(this, id);
+    (schedule$$1.value || (schedule$$1.value = {}))[name] = value.apply(this, arguments);
+  });
+
+  return function(node) {
+    return get(node, id).value[name];
+  };
+}
+
+function interpolate(a, b) {
+  var c;
+  return (typeof b === "number" ? d3Interpolate.interpolateNumber
+      : b instanceof d3Color.color ? d3Interpolate.interpolateRgb
+      : (c = d3Color.color(b)) ? (b = c, d3Interpolate.interpolateRgb)
+      : d3Interpolate.interpolateString)(a, b);
+}
+
+function attrRemove(name) {
+  return function() {
+    this.removeAttribute(name);
+  };
+}
+
+function attrRemoveNS(fullname) {
+  return function() {
+    this.removeAttributeNS(fullname.space, fullname.local);
+  };
+}
+
+function attrConstant(name, interpolate$$1, value1) {
+  var string00,
+      string1 = value1 + "",
+      interpolate0;
+  return function() {
+    var string0 = this.getAttribute(name);
+    return string0 === string1 ? null
+        : string0 === string00 ? interpolate0
+        : interpolate0 = interpolate$$1(string00 = string0, value1);
+  };
+}
+
+function attrConstantNS(fullname, interpolate$$1, value1) {
+  var string00,
+      string1 = value1 + "",
+      interpolate0;
+  return function() {
+    var string0 = this.getAttributeNS(fullname.space, fullname.local);
+    return string0 === string1 ? null
+        : string0 === string00 ? interpolate0
+        : interpolate0 = interpolate$$1(string00 = string0, value1);
+  };
+}
+
+function attrFunction(name, interpolate$$1, value) {
+  var string00,
+      string10,
+      interpolate0;
+  return function() {
+    var string0, value1 = value(this), string1;
+    if (value1 == null) return void this.removeAttribute(name);
+    string0 = this.getAttribute(name);
+    string1 = value1 + "";
+    return string0 === string1 ? null
+        : string0 === string00 && string1 === string10 ? interpolate0
+        : (string10 = string1, interpolate0 = interpolate$$1(string00 = string0, value1));
+  };
+}
+
+function attrFunctionNS(fullname, interpolate$$1, value) {
+  var string00,
+      string10,
+      interpolate0;
+  return function() {
+    var string0, value1 = value(this), string1;
+    if (value1 == null) return void this.removeAttributeNS(fullname.space, fullname.local);
+    string0 = this.getAttributeNS(fullname.space, fullname.local);
+    string1 = value1 + "";
+    return string0 === string1 ? null
+        : string0 === string00 && string1 === string10 ? interpolate0
+        : (string10 = string1, interpolate0 = interpolate$$1(string00 = string0, value1));
+  };
+}
+
+function transition_attr(name, value) {
+  var fullname = d3Selection.namespace(name), i = fullname === "transform" ? d3Interpolate.interpolateTransformSvg : interpolate;
+  return this.attrTween(name, typeof value === "function"
+      ? (fullname.local ? attrFunctionNS : attrFunction)(fullname, i, tweenValue(this, "attr." + name, value))
+      : value == null ? (fullname.local ? attrRemoveNS : attrRemove)(fullname)
+      : (fullname.local ? attrConstantNS : attrConstant)(fullname, i, value));
+}
+
+function attrInterpolate(name, i) {
+  return function(t) {
+    this.setAttribute(name, i(t));
+  };
+}
+
+function attrInterpolateNS(fullname, i) {
+  return function(t) {
+    this.setAttributeNS(fullname.space, fullname.local, i(t));
+  };
+}
+
+function attrTweenNS(fullname, value) {
+  var t0, i0;
+  function tween() {
+    var i = value.apply(this, arguments);
+    if (i !== i0) t0 = (i0 = i) && attrInterpolateNS(fullname, i);
+    return t0;
+  }
+  tween._value = value;
+  return tween;
+}
+
+function attrTween(name, value) {
+  var t0, i0;
+  function tween() {
+    var i = value.apply(this, arguments);
+    if (i !== i0) t0 = (i0 = i) && attrInterpolate(name, i);
+    return t0;
+  }
+  tween._value = value;
+  return tween;
+}
+
+function transition_attrTween(name, value) {
+  var key = "attr." + name;
+  if (arguments.length < 2) return (key = this.tween(key)) && key._value;
+  if (value == null) return this.tween(key, null);
+  if (typeof value !== "function") throw new Error;
+  var fullname = d3Selection.namespace(name);
+  return this.tween(key, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
+}
+
+function delayFunction(id, value) {
+  return function() {
+    init(this, id).delay = +value.apply(this, arguments);
+  };
+}
+
+function delayConstant(id, value) {
+  return value = +value, function() {
+    init(this, id).delay = value;
+  };
+}
+
+function transition_delay(value) {
+  var id = this._id;
+
+  return arguments.length
+      ? this.each((typeof value === "function"
+          ? delayFunction
+          : delayConstant)(id, value))
+      : get(this.node(), id).delay;
+}
+
+function durationFunction(id, value) {
+  return function() {
+    set(this, id).duration = +value.apply(this, arguments);
+  };
+}
+
+function durationConstant(id, value) {
+  return value = +value, function() {
+    set(this, id).duration = value;
+  };
+}
+
+function transition_duration(value) {
+  var id = this._id;
+
+  return arguments.length
+      ? this.each((typeof value === "function"
+          ? durationFunction
+          : durationConstant)(id, value))
+      : get(this.node(), id).duration;
+}
+
+function easeConstant(id, value) {
+  if (typeof value !== "function") throw new Error;
+  return function() {
+    set(this, id).ease = value;
+  };
+}
+
+function transition_ease(value) {
+  var id = this._id;
+
+  return arguments.length
+      ? this.each(easeConstant(id, value))
+      : get(this.node(), id).ease;
+}
+
+function transition_filter(match) {
+  if (typeof match !== "function") match = d3Selection.matcher(match);
+
+  for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n; ++i) {
+      if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
+        subgroup.push(node);
+      }
+    }
+  }
+
+  return new Transition(subgroups, this._parents, this._name, this._id);
+}
+
+function transition_merge(transition$$1) {
+  if (transition$$1._id !== this._id) throw new Error;
+
+  for (var groups0 = this._groups, groups1 = transition$$1._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
+    for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
+      if (node = group0[i] || group1[i]) {
+        merge[i] = node;
+      }
+    }
+  }
+
+  for (; j < m0; ++j) {
+    merges[j] = groups0[j];
+  }
+
+  return new Transition(merges, this._parents, this._name, this._id);
+}
+
+function start(name) {
+  return (name + "").trim().split(/^|\s+/).every(function(t) {
+    var i = t.indexOf(".");
+    if (i >= 0) t = t.slice(0, i);
+    return !t || t === "start";
+  });
+}
+
+function onFunction(id, name, listener) {
+  var on0, on1, sit = start(name) ? init : set;
+  return function() {
+    var schedule$$1 = sit(this, id),
+        on = schedule$$1.on;
+
+    // If this node shared a dispatch with the previous node,
+    // just assign the updated shared dispatch and we’re done!
+    // Otherwise, copy-on-write.
+    if (on !== on0) (on1 = (on0 = on).copy()).on(name, listener);
+
+    schedule$$1.on = on1;
+  };
+}
+
+function transition_on(name, listener) {
+  var id = this._id;
+
+  return arguments.length < 2
+      ? get(this.node(), id).on.on(name)
+      : this.each(onFunction(id, name, listener));
+}
+
+function removeFunction(id) {
+  return function() {
+    var parent = this.parentNode;
+    for (var i in this.__transition) if (+i !== id) return;
+    if (parent) parent.removeChild(this);
+  };
+}
+
+function transition_remove() {
+  return this.on("end.remove", removeFunction(this._id));
+}
+
+function transition_select(select) {
+  var name = this._name,
+      id = this._id;
+
+  if (typeof select !== "function") select = d3Selection.selector(select);
+
+  for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, subgroup = subgroups[j] = new Array(n), node, subnode, i = 0; i < n; ++i) {
+      if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
+        if ("__data__" in node) subnode.__data__ = node.__data__;
+        subgroup[i] = subnode;
+        schedule(subgroup[i], name, id, i, subgroup, get(node, id));
+      }
+    }
+  }
+
+  return new Transition(subgroups, this._parents, name, id);
+}
+
+function transition_selectAll(select) {
+  var name = this._name,
+      id = this._id;
+
+  if (typeof select !== "function") select = d3Selection.selectorAll(select);
+
+  for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
+      if (node = group[i]) {
+        for (var children = select.call(node, node.__data__, i, group), child, inherit = get(node, id), k = 0, l = children.length; k < l; ++k) {
+          if (child = children[k]) {
+            schedule(child, name, id, k, children, inherit);
+          }
+        }
+        subgroups.push(children);
+        parents.push(node);
+      }
+    }
+  }
+
+  return new Transition(subgroups, parents, name, id);
+}
+
+var Selection = d3Selection.selection.prototype.constructor;
+
+function transition_selection() {
+  return new Selection(this._groups, this._parents);
+}
+
+function styleNull(name, interpolate$$1) {
+  var string00,
+      string10,
+      interpolate0;
+  return function() {
+    var string0 = d3Selection.style(this, name),
+        string1 = (this.style.removeProperty(name), d3Selection.style(this, name));
+    return string0 === string1 ? null
+        : string0 === string00 && string1 === string10 ? interpolate0
+        : interpolate0 = interpolate$$1(string00 = string0, string10 = string1);
+  };
+}
+
+function styleRemove(name) {
+  return function() {
+    this.style.removeProperty(name);
+  };
+}
+
+function styleConstant(name, interpolate$$1, value1) {
+  var string00,
+      string1 = value1 + "",
+      interpolate0;
+  return function() {
+    var string0 = d3Selection.style(this, name);
+    return string0 === string1 ? null
+        : string0 === string00 ? interpolate0
+        : interpolate0 = interpolate$$1(string00 = string0, value1);
+  };
+}
+
+function styleFunction(name, interpolate$$1, value) {
+  var string00,
+      string10,
+      interpolate0;
+  return function() {
+    var string0 = d3Selection.style(this, name),
+        value1 = value(this),
+        string1 = value1 + "";
+    if (value1 == null) string1 = value1 = (this.style.removeProperty(name), d3Selection.style(this, name));
+    return string0 === string1 ? null
+        : string0 === string00 && string1 === string10 ? interpolate0
+        : (string10 = string1, interpolate0 = interpolate$$1(string00 = string0, value1));
+  };
+}
+
+function styleMaybeRemove(id, name) {
+  var on0, on1, listener0, key = "style." + name, event = "end." + key, remove;
+  return function() {
+    var schedule$$1 = set(this, id),
+        on = schedule$$1.on,
+        listener = schedule$$1.value[key] == null ? remove || (remove = styleRemove(name)) : undefined;
+
+    // If this node shared a dispatch with the previous node,
+    // just assign the updated shared dispatch and we’re done!
+    // Otherwise, copy-on-write.
+    if (on !== on0 || listener0 !== listener) (on1 = (on0 = on).copy()).on(event, listener0 = listener);
+
+    schedule$$1.on = on1;
+  };
+}
+
+function transition_style(name, value, priority) {
+  var i = (name += "") === "transform" ? d3Interpolate.interpolateTransformCss : interpolate;
+  return value == null ? this
+      .styleTween(name, styleNull(name, i))
+      .on("end.style." + name, styleRemove(name))
+    : typeof value === "function" ? this
+      .styleTween(name, styleFunction(name, i, tweenValue(this, "style." + name, value)))
+      .each(styleMaybeRemove(this._id, name))
+    : this
+      .styleTween(name, styleConstant(name, i, value), priority)
+      .on("end.style." + name, null);
+}
+
+function styleInterpolate(name, i, priority) {
+  return function(t) {
+    this.style.setProperty(name, i(t), priority);
+  };
+}
+
+function styleTween(name, value, priority) {
+  var t, i0;
+  function tween() {
+    var i = value.apply(this, arguments);
+    if (i !== i0) t = (i0 = i) && styleInterpolate(name, i, priority);
+    return t;
+  }
+  tween._value = value;
+  return tween;
+}
+
+function transition_styleTween(name, value, priority) {
+  var key = "style." + (name += "");
+  if (arguments.length < 2) return (key = this.tween(key)) && key._value;
+  if (value == null) return this.tween(key, null);
+  if (typeof value !== "function") throw new Error;
+  return this.tween(key, styleTween(name, value, priority == null ? "" : priority));
+}
+
+function textConstant(value) {
+  return function() {
+    this.textContent = value;
+  };
+}
+
+function textFunction(value) {
+  return function() {
+    var value1 = value(this);
+    this.textContent = value1 == null ? "" : value1;
+  };
+}
+
+function transition_text(value) {
+  return this.tween("text", typeof value === "function"
+      ? textFunction(tweenValue(this, "text", value))
+      : textConstant(value == null ? "" : value + ""));
+}
+
+function transition_transition() {
+  var name = this._name,
+      id0 = this._id,
+      id1 = newId();
+
+  for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
+      if (node = group[i]) {
+        var inherit = get(node, id0);
+        schedule(node, name, id1, i, group, {
+          time: inherit.time + inherit.delay + inherit.duration,
+          delay: 0,
+          duration: inherit.duration,
+          ease: inherit.ease
+        });
+      }
+    }
+  }
+
+  return new Transition(groups, this._parents, name, id1);
+}
+
+function transition_end() {
+  var on0, on1, that = this, id = that._id, size = that.size();
+  return new Promise(function(resolve, reject) {
+    var cancel = {value: reject},
+        end = {value: function() { if (--size === 0) resolve(); }};
+
+    that.each(function() {
+      var schedule$$1 = set(this, id),
+          on = schedule$$1.on;
+
+      // If this node shared a dispatch with the previous node,
+      // just assign the updated shared dispatch and we’re done!
+      // Otherwise, copy-on-write.
+      if (on !== on0) {
+        on1 = (on0 = on).copy();
+        on1._.cancel.push(cancel);
+        on1._.interrupt.push(cancel);
+        on1._.end.push(end);
+      }
+
+      schedule$$1.on = on1;
+    });
+  });
+}
+
+var id = 0;
+
+function Transition(groups, parents, name, id) {
+  this._groups = groups;
+  this._parents = parents;
+  this._name = name;
+  this._id = id;
+}
+
+function transition(name) {
+  return d3Selection.selection().transition(name);
+}
+
+function newId() {
+  return ++id;
+}
+
+var selection_prototype = d3Selection.selection.prototype;
+
+Transition.prototype = transition.prototype = {
+  constructor: Transition,
+  select: transition_select,
+  selectAll: transition_selectAll,
+  filter: transition_filter,
+  merge: transition_merge,
+  selection: transition_selection,
+  transition: transition_transition,
+  call: selection_prototype.call,
+  nodes: selection_prototype.nodes,
+  node: selection_prototype.node,
+  size: selection_prototype.size,
+  empty: selection_prototype.empty,
+  each: selection_prototype.each,
+  on: transition_on,
+  attr: transition_attr,
+  attrTween: transition_attrTween,
+  style: transition_style,
+  styleTween: transition_styleTween,
+  text: transition_text,
+  remove: transition_remove,
+  tween: transition_tween,
+  delay: transition_delay,
+  duration: transition_duration,
+  ease: transition_ease,
+  end: transition_end
+};
+
+var defaultTiming = {
+  time: null, // Set on use.
+  delay: 0,
+  duration: 250,
+  ease: d3Ease.easeCubicInOut
+};
+
+function inherit(node, id) {
+  var timing;
+  while (!(timing = node.__transition) || !(timing = timing[id])) {
+    if (!(node = node.parentNode)) {
+      return defaultTiming.time = d3Timer.now(), defaultTiming;
+    }
+  }
+  return timing;
+}
+
+function selection_transition(name) {
+  var id,
+      timing;
+
+  if (name instanceof Transition) {
+    id = name._id, name = name._name;
+  } else {
+    id = newId(), (timing = defaultTiming).time = d3Timer.now(), name = name == null ? null : name + "";
+  }
+
+  for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
+      if (node = group[i]) {
+        schedule(node, name, id, i, group, timing || inherit(node, id));
+      }
+    }
+  }
+
+  return new Transition(groups, this._parents, name, id);
+}
+
+d3Selection.selection.prototype.interrupt = selection_interrupt;
+d3Selection.selection.prototype.transition = selection_transition;
+
+var root = [null];
+
+function active(node, name) {
+  var schedules = node.__transition,
+      schedule$$1,
+      i;
+
+  if (schedules) {
+    name = name == null ? null : name + "";
+    for (i in schedules) {
+      if ((schedule$$1 = schedules[i]).state > SCHEDULED && schedule$$1.name === name) {
+        return new Transition([[node]], root, name, +i);
+      }
+    }
+  }
+
+  return null;
+}
+
+exports.transition = transition;
+exports.active = active;
+exports.interrupt = interrupt;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+
+},{"d3-color":3,"d3-dispatch":4,"d3-ease":5,"d3-interpolate":6,"d3-selection":8,"d3-timer":9}],11:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -3360,7 +4637,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":9,"./lib/tychei":10,"./lib/xor128":11,"./lib/xor4096":12,"./lib/xorshift7":13,"./lib/xorwow":14,"./seedrandom":15}],9:[function(require,module,exports){
+},{"./lib/alea":12,"./lib/tychei":13,"./lib/xor128":14,"./lib/xor4096":15,"./lib/xorshift7":16,"./lib/xorwow":17,"./seedrandom":18}],12:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -3476,7 +4753,7 @@ if (module && module.exports) {
 
 
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -3581,7 +4858,7 @@ if (module && module.exports) {
 
 
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -3664,7 +4941,7 @@ if (module && module.exports) {
 
 
 
-},{}],12:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -3812,7 +5089,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -3911,7 +5188,7 @@ if (module && module.exports) {
 );
 
 
-},{}],14:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -3999,7 +5276,7 @@ if (module && module.exports) {
 
 
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -4254,6 +5531,6 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":16}],16:[function(require,module,exports){
+},{"crypto":19}],19:[function(require,module,exports){
 
 },{}]},{},[1]);
