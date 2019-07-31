@@ -59,28 +59,28 @@ module.exports = bh_wordcloud = class{
 	}
 
 	draw(words,e) {
-		var n = this.svg.selectAll("g text").data(words, d=>d.text);//, function(t) {
+		var n = this.svg.selectAll("text").data(words, d=>d.text).enter().append("text");//, function(t) {
 		var dur = 600;
 
-		n.enter().append("text")
+		n.attr("text-anchor", "middle")
+			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
 			.style("font-family", d => d.font)
 			.style("fill", (d,i) => this.colors[i % this.colors.length])
-			.attr("text-anchor", "middle")
-			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
-			.style("font-size", d=>d.size+"px")//.transition().duration(dur).style("font-size",d=>d.size+"px");
+			.style("font-size", "1px").transition().duration(dur).style("font-size",d=>d.size+"px")
 			.text(d => d.text)
 			.on("click",(d,i)=>this.show_related(d,i));
 		/*
-    	n.transition().duration(dur).delay(100)
-			.attr("font-size",function(d){console.log("test");return "1px"})
+    	n.selectAll("text").transition().duration(dur)
+			.attr("font-size", d=>"1px")
 			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
 			.style("fill-opacity",1);
-
+		
 		n.exit().transition().duration(dur)
 			.style("fill-opacity", 1e-6)
 			.attr("font-size","1px")
 			.remove();
 		*/
+		
 	}
 
 	show_related(d,i){
