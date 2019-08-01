@@ -9,7 +9,11 @@ module.exports = bh_wordcloud = class{
 		this.div_wordcloud = this.d3_select("#"+tag);
 		this.width = width;
 		this.height = height;
-		this.max_size = 130; //adjust this for biggest word
+		this.svg = this.div_wordcloud.append("svg")
+			.attr("width", width)
+		 	.attr("height", height)
+			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
+		this.div_papers = this.div_wordcloud.append("div");
 	}
 
 	start(){
@@ -22,7 +26,11 @@ module.exports = bh_wordcloud = class{
 	load_data(data){
 		var arr = data.split("\n");
 		var words = [];
-	    this.max_count = parseInt(arr[0].split(",")[1]);
+		var first = arr[0].split(",");
+	    this.max_count = parseInt(first[1]);
+		//assume average word is length 5
+		this.max_size = (this.width * 0.30) * (5 / first[0].length);
+		console.log(this.max_size)
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
@@ -35,24 +43,17 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_wordcloud(words,width,height){
-		//Draw Wordcloud
-		var random = this.random
-		var max_count = this.max_count
-		var max_size = this.max_size
+		//Draw Word
+		var random = this.random;
 		var wordcloud = this.cloud()
 			.size([width,height])
-			.random(random)
+			.random(this.random)
 			.words(words)
 			.padding(5)
-			.rotate(function() { return ~~(random() * 2) * 90; })
+			.rotate( () =>  ~~(this.random() * 2) * 90)
 			.font("Impact")
-			.fontSize(function(d) { return Math.ceil(max_size*(d.size/max_count)); })
+			.fontSize( d => ~~(this.max_size*(d.size/this.max_count)))
 			.on("end",(words,e)=>this.draw(words,e));
-		this.svg = this.div_wordcloud.append("svg")
-			.attr("width", width)
-		 	.attr("height", height)
-			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
-		this.div_papers = this.div_wordcloud.append("div");
 
 		wordcloud.start();
 		return wordcloud;
