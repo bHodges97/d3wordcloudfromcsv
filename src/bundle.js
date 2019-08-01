@@ -8,9 +8,14 @@ module.exports = bh_wordcloud = class{
 		this.random = require("seedrandom")(0); //if not seeding use random=Math.random
 		this.url = url;
 		this.div_wordcloud = this.d3_select("#"+tag);
+		width = 800;
 		this.width = width;
 		this.height = height;
-		this.max_size = 130; //adjust this for biggest word
+		this.svg = this.div_wordcloud.append("svg")
+			.attr("width", width)
+		 	.attr("height", height)
+			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
+		this.div_papers = this.div_wordcloud.append("div");
 	}
 
 	start(){
@@ -23,7 +28,11 @@ module.exports = bh_wordcloud = class{
 	load_data(data){
 		var arr = data.split("\n");
 		var words = [];
-	    this.max_count = parseInt(arr[0].split(",")[1]);
+		var first = arr[0].split(",");
+	    this.max_count = parseInt(first[1]);
+		//assume average word is length 5 make it take up half the screen
+		this.max_size = (this.width * 0.30) * (5 / first[0].length);
+		console.log(this.max_size)
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
@@ -36,52 +45,41 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_wordcloud(words,width,height){
-		//Draw Wordcloud
-		var random = this.random
-		var max_count = this.max_count
-		var max_size = this.max_size
+		//Draw Word
+		var random = this.random;
 		var wordcloud = this.cloud()
 			.size([width,height])
-			.random(random)
+			.random(this.random)
 			.words(words)
 			.padding(5)
-			.rotate(function() { return ~~(random() * 2) * 90; })
+			.rotate( () =>  ~~(this.random() * 2) * 90)
 			.font("Impact")
-			.fontSize(function(d) { return Math.ceil(max_size*(d.size/max_count)); })
+			.fontSize( d => ~~(this.max_size*(d.size/this.max_count)))
 			.on("end",(words,e)=>this.draw(words,e));
-		this.svg = this.div_wordcloud.append("svg")
-			.attr("width", width)
-		 	.attr("height", height)
-			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
-		this.div_papers = this.div_wordcloud.append("div");
 
 		wordcloud.start();
 		return wordcloud;
 	}
 
 	draw(words,e) {
-		var n = this.svg.selectAll("g text").data(words, d=>d.text);//, function(t) {
-		var dur = 600;
+		var n = this.svg.selectAll("text").data(words, d=>d.text).enter().append("text");
+		var dur = 1000;
 
-		n.enter().append("text")
+		n.attr("text-anchor", "middle")
 			.style("font-family", d => d.font)
 			.style("fill", (d,i) => this.colors[i % this.colors.length])
-			.attr("text-anchor", "middle")
-			.attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
-			.style("font-size", d=>d.size+"px")//.transition().duration(dur).style("font-size",d=>d.size+"px");
+			.style("font-size", "1px")
 			.text(d => d.text)
 			.on("click",(d,i)=>this.show_related(d,i));
-		/*
-    	n.transition().duration(dur).delay(100)
-			.attr("font-size",function(d){console.log("test");return "1px"})
-			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
-			.style("fill-opacity",1);
 
+    	n.transition().duration(dur)
+			.style("font-size", d=>d.size+"px")
+			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+		
 		n.exit().transition().duration(dur)
-			.style("fill-opacity", 1e-6)
-			.attr("font-size","1px")
+			.style("font-size","1px")
 			.remove();
-		*/
+		
 	}
 
 	show_related(d,i){
