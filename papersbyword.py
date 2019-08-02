@@ -14,8 +14,7 @@ if len(argv) == 1 or argv[1] == "":#No word specified
     for i in indices:
         print(f"{inverse[i]}, {tfs[i]}")
 elif argv[1] in vocab:
-    word = argv[1].replace("\'","")
-    idx = vocab[word]
+    idx = vocab[argv[1]]
     papers = X[...,idx].nonzero()[0]
     tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
     indices = (-tfs).argsort()[:limit]

@@ -34,7 +34,6 @@ module.exports = bh_wordcloud = class{
 		var max_size = (this.width * 0.30) * (5 / first[0].length);
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
-			console.log(splitted);
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
 			var count = parseInt(splitted[1]);
 			if(word.length > 2){
