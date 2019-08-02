@@ -15,10 +15,11 @@ module.exports = bh_wordcloud = class{
 		 	.attr("height", height)
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 		this.div_papers = this.div_wordcloud.append("div");
+    	this.background = this.svg.append("g");
 	}
 
-	start(){
-		fetch(this.url + '/freq_data.csv')
+	start(word){
+		fetch("termfreq.php?word=\'"+word+"\'")
 			.then(response => response.text())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(data,this.width,this.height))
@@ -28,16 +29,17 @@ module.exports = bh_wordcloud = class{
 		var arr = data.split("\n");
 		var words = [];
 		var first = arr[0].split(",");
-	    this.max_count = parseInt(first[1]);
+	    var max_count = parseInt(first[1]);
 		//assume average word is length 5
-		this.max_size = (this.width * 0.30) * (5 / first[0].length);
-		console.log(this.max_size)
+		var max_size = (this.width * 0.30) * (5 / first[0].length);
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
 			var count = parseInt(splitted[1]);
 			if(count > 10 && word.length > 2){
-				words.push({text:word,size:count});
+				var scaled = count * (this.width/8) / max_count;
+				if(scaled > 0)words.push({text:word,size:scaled});
+				else break;
 			}
 		}
 		return words
@@ -53,7 +55,7 @@ module.exports = bh_wordcloud = class{
 			.padding(5)
 			.rotate( () =>  ~~(this.random() * 2) * 90)
 			.font("Impact")
-			.fontSize( d => ~~(this.max_size*(d.size/this.max_count)))
+			.fontSize( d =>  d.size)
 			.on("end",(words,e)=>this.draw(words,e));
 
 		wordcloud.start();
@@ -61,24 +63,26 @@ module.exports = bh_wordcloud = class{
 	}
 
 	draw(words,e) {
-		var n = this.svg.selectAll("text").data(words, d=>d.text).enter().append("text");
+		var vis = this.svg.selectAll("text").data(words,d=>d.text);
 		var dur = 1000;
+		
+		/*vis.exit().transition(dur)
+		  .style('fill-opacity', 1e-6)
+			.style("font-size",function(){return "1px"})
+		*/
+		vis.exit().remove()
 
+		var n = vis.enter().append("text");
 		n.attr("text-anchor", "middle")
-			.style("font-family", d => d.font)
-			.style("fill", (d,i) => this.colors[i % this.colors.length])
 			.style("font-size", "1px")
-			.text(d => d.text)
+			.text(function(d){return d.text})
 			.on("click",(d,i)=>this.show_related(d,i));
 
-    	n.transition().duration(dur)
+    	this.svg.selectAll("text").transition().duration(dur)
+			.style("font-family", function(d){return d.font})
 			.style("font-size", d=>d.size+"px")
+			.style("fill", (d,i) => this.colors[i % this.colors.length])
 			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
-		
-		n.exit().transition().duration(dur)
-			.style("font-size","1px")
-			.remove();
-		
 	}
 
 	show_related(d,i){
