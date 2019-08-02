@@ -22,4 +22,4 @@ elif argv[1] in vocab:
     for i in indices:
         print(f"{inverse[i]}, {tfs[i]}")
 else:
-    print("none, 1")
+    print("not found, 1")
