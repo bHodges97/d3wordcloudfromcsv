@@ -8,7 +8,6 @@ module.exports = bh_wordcloud = class{
 		this.random = require("seedrandom")(0); //if not seeding use random=Math.random
 		this.url = url;
 		this.div_wordcloud = this.d3_select("#"+tag);
-		width = 800;
 		this.width = width;
 		this.height = height;
 		this.svg = this.div_wordcloud.append("svg")
@@ -30,7 +29,7 @@ module.exports = bh_wordcloud = class{
 		var words = [];
 		var first = arr[0].split(",");
 	    this.max_count = parseInt(first[1]);
-		//assume average word is length 5 make it take up half the screen
+		//assume average word is length 5
 		this.max_size = (this.width * 0.30) * (5 / first[0].length);
 		console.log(this.max_size)
 		for (var i = 0; i < arr.length-1; i++) {
