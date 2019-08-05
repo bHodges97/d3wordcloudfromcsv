@@ -1,4 +1,4 @@
 <?php
 $q = $_GET["word"];
-passthru("./papersbyword.py " . $q);
+passthru("python3 papersbyword.py " . $q);
 ?>
