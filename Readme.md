@@ -6,9 +6,9 @@ Produced as part of an internship under [Julian Kunkel](https://hps.vi4io.org/ab
 
 
 #### ~~papers.csv~~
-~~id, HTML~~
+~~ id, HTML~~
 #### ~~freq_data.csv~~
-~~word, count ~~
+~~ word, count ~~
 #### related_papers.csv
 word, JSON of {paper_id: count, ...}
 
@@ -16,7 +16,7 @@ word, JSON of {paper_id: count, ...}
 numpy pickled word,id dict
 
 #### tfs.npz
-scipy csr matrix shaped(paper,word) 
+scipy csr matrix shaped(paper,word)
 
 ### Build
 For a local new installation of npm:
