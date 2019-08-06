@@ -5,10 +5,12 @@ Produced as part of an internship under [Julian Kunkel](https://hps.vi4io.org/ab
 [python script for generating the data files](https://github.com/bHodges97/pdf-from-site)
 
 
-#### ~~papers.csv~~
-~~id, HTML~~
+#### papers.csv
+id, HTML
+
 #### ~~freq_data.csv~~
 ~~word, count~~
+
 #### related_papers.csv
 word, JSON of {paper_id: count, ...}
 
