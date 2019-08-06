@@ -12,8 +12,8 @@ if len(argv) == 1 or argv[1] not in vocab:
     exit()
 
 word = vocab[argv[1]]
-column = X[:,word].nonzero()[0]
-papers = (-column).argsort()[:limit]
+column = X[:,word].toarray().ravel()
+papers = (-column).argsort()[:limit] #sort and trim
 
 htmldict = dict()
 with open("papers.csv","r", encoding='utf-8') as f:
@@ -22,7 +22,7 @@ with open("papers.csv","r", encoding='utf-8') as f:
         paper = int(paper)
         if paper in papers:
             htmldict[paper] = html
-            
+
 print("<ul>",end="")
 for paper in papers:
     count = column[paper]

@@ -85,7 +85,7 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_related(d,i){
-		fetch('wordassoc.php?word='+d.text)
+		fetch('wordassoc.php?word=\''+d.text+'\'')
 		  .then(responce => responce.text())
 		  .then(text=>this.div_papers.html(text));
 	}
