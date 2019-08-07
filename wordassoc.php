@@ -2,6 +2,7 @@
 $q = $_GET['word'];
 
 function get_related($word){
+	$word = trim($word,"'");
 	if (($handle = fopen("related_papers.csv","r")) !== FALSE) {
 		while (($data = fgetcsv($handle, ",")) !== FALSE) {
 			if($data[0] == $word){
