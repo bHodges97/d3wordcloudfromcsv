@@ -6,7 +6,7 @@ import re
 from sys import argv
 
 X = sp.load_npz('tfs.npz')
-vocab = np.load('vocab.npy', allow_pickle=True).item()
+vocab = np.load('vocab.npz', allow_pickle=True)['arr_0'].item()
 inverse = {v:k for k,v in vocab.items()}
 limit = 1000
 if len(argv) == 1 or argv[1] == "":#No word specified
