@@ -23,8 +23,7 @@ else:
             words.append(v)
     if words:
         papers = np.unique(X[:,words].nonzero()[0])
-        summed = np.asarray(X[papers,:].sum(axis=0)).ravel()
-        tfs = np.asarray(summed).ravel()
+        tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
         indices = (-tfs).argsort()[:limit]
         for i in indices:
             print(f"{inverse[i]}, {tfs[i]}")
