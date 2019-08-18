@@ -14,7 +14,7 @@ id, HTML
 #### related_papers.csv
 word, JSON of {paper_id: count, ...}
 
-#### vocab.npy
+#### vocab.npz
 numpy pickled word,id dict
 
 #### tfs.npz

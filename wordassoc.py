@@ -1,17 +1,15 @@
 #!/usr/bin/python3
 import numpy as np
-import scipy.sparse as sp
 import csv
 from sys import argv
 
-X = sp.load_npz('tfs.npz')
-vocab = np.load('vocab.npy', allow_pickle=True).item()
+X,vocab = load_npz('tfs.npz')
 limit = 20
 
 if len(argv) != 5 or argv[1] not in vocab:
     exit()
 
-word = vocab[argv[1]]
+word = vocab.index(argv[1])
 directory = argv[2]
 limit = int(argv[3])
 abstract = argv[4].lower() == "true"
