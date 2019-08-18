@@ -17,7 +17,7 @@ else:
     words = []
     word = argv[1].strip()
     pattern = re.compile(word)
-    for idx,word in vocab.items():
+    for idx,word in enumerate(vocab):
         if pattern.match(word):
             words.append(idx)
     if words:
