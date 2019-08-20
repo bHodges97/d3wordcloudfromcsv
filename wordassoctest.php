@@ -20,6 +20,6 @@ if(isset($_GET["abstract"]))
 	$abstract = $_GET["abstract"];
 }
 
-putenv('LC_ALL=en_US.UTF-8');
+putenv('LC_ALL=C.UTF-8');
 passthru("python3 wordassoc.py " . $word . " " . $dir . " " . $count . " " . $abstract);
 ?>
