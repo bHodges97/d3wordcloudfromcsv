@@ -24,7 +24,7 @@ with open("papers.csv","r", encoding='utf-8') as f:
     reader = csv.reader(f)
     for paper,html,_ in reader:
         paper = int(paper)
-        if paper in papers:
+        if paper in papers and X[paper,word_idx] != 0:
             htmldict[paper] = html
 
 print("<ul>",end="")
