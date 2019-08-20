@@ -2,9 +2,10 @@
 import numpy as np
 import csv
 from sys import argv
+from savenpz import load_npz
 
 X,vocab = load_npz('tfs.npz')
-limit = 20
+vocab = vocab.tolist()
 
 if len(argv) != 5 or argv[1] not in vocab:
     exit()
