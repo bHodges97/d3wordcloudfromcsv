@@ -10,13 +10,13 @@ vocab = vocab.tolist()
 if len(argv) != 5 or argv[1] not in vocab:
     exit()
 
-word = vocab.index(argv[1])
+word = argv[1].strip()
+word_idx = vocab.index(word)
 directory = argv[2]
 limit = int(argv[3])
 abstract = argv[4].lower() == "true"
 
-
-column = X[:,word].toarray().ravel()
+column = X[:,word_idx].toarray().ravel()
 papers = (-column).argsort()[:limit] #sort and trim
 
 htmldict = dict()
