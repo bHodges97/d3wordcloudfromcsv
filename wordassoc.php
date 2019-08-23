@@ -1,39 +1,25 @@
 <?php
-$q = $_GET['word'];
-
-function get_related($word){
-	$word = trim($word,"'");
-	if (($handle = fopen("related_papers.csv","r")) !== FALSE) {
-		while (($data = fgetcsv($handle, ",")) !== FALSE) {
-			if($data[0] == $word){
-				return $data[1];
-			}
-		}
-	}else{
-		echo "failed";
-	}
+$word = "\'\'";
+if(isset($_GET["word"]))
+{
+	$word = $_GET["word"];
 }
-function getHTML($line){
-	$handle = fopen("papers.csv", "r");
-	$row = 1;
-	while (($data = fgetcsv($handle, ",")) !== FALSE) {
-		if($row == $line){
-			return $data[1];
-		}
-        $row++;
-    }
+$dir = ".";
+if(isset($_GET["dir"]))
+{
+	$dir = $_GET["dir"];
+}
+$count = 20;
+if(isset($_GET["count"]))
+{
+	$count = $_GET["count"];
+}
+$abstract = "false";
+if(isset($_GET["abstract"]))
+{
+	$abstract = $_GET["abstract"];
 }
 
-$data = json_decode(get_related($q),true);
-$out = "";
-
-foreach ($data as $index => $count) {
-	$html = getHTML($index);
-	$out .= "<li> Count:" . $count . " <br> " . $html . "</li>"; 
-}
-
-echo "<ul>" . $out . "</ul>"
-
-
-
+putenv('LC_ALL=C.UTF-8');
+passthru("python3 wordassoc.py " . $word . " " . $dir . " " . $count . " " . $abstract);
 ?>
