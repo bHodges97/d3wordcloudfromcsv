@@ -15,13 +15,19 @@ if len(argv) == 1 or argv[1] == "":#No word specified
         print(f"{vocab[i]}, {tfs[i]}")
 else:
     words = []
-    word = argv[1].strip()
-    pattern = re.compile(word)
+    word = argv[1].strip().split(" ")
+    patterns = [re.compile(w) for w in word]
+    words = [[] for w in word]
     for idx,word in enumerate(vocab):
-        if pattern.match(word):
-            words.append(idx)
-    if words:
-        papers = np.unique(X[:,words].nonzero()[0])
+        for i,pattern in enumerate(patterns):
+            if pattern.match(word):
+                words[i].append(idx)
+    papers = []
+    for i in range(X.shape[0]):
+        if all(any(X[i,x]>0 for x in s) for s in words):
+            papers.append(i)
+    if papers:
+        #papers = np.unique(X[:,words].nonzero()[0])
         tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
         indices = (-tfs).argsort()[:limit]
         for i in indices:
