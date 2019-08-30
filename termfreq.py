@@ -1,8 +1,6 @@
-#!/usr/bin/python3
-
 import numpy as np
 import re
-from sys import argv
+from sys import argv,stdout
 from savenpz import load_npz
 
 word = argv[1].strip()
@@ -10,12 +8,13 @@ path = argv[2]
 
 X,vocab = load_npz(path)
 limit = 1000
+out = ""
 
 if word == "":#No word specified
     tfs = np.asarray(X.sum(axis=0)).ravel()
     indices = (-tfs).argsort()[:limit]
     for i in indices:
-        print(f"{vocab[i]}, {tfs[i]}")
+        out += f"{vocab[i]}, {tfs[i]}\n"
 else:
     words = []
     word = argv[1].strip().split(" ")
@@ -34,6 +33,8 @@ else:
         tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
         indices = (-tfs).argsort()[:limit]
         for i in indices:
-            print(f"{vocab[i]}, {tfs[i]}")
+            out += f"{vocab[i]}, {tfs[i]}\n"
     else:
-        print("Not found,1")
+        out = "Not found,1"
+
+stdout.buffer.write(out.encode("utf-8"))

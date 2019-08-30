@@ -1,27 +1,18 @@
 <?php
-$word = "\'\'";
-if(isset($_GET["word"]))
-{
-  $word = $_GET["word"];
+$q = $_GET['word'];
+if(! isset($q)){
+  print("User word= and dir= as parameters");
+  exit(1);
 }
-$dir = ".";
-if(isset($_GET["dir"]))
-{
-  $dir = $_GET["dir"];
+$dir = $_GET['dir'];
+if(strpos($dir, ".")){
+  print("Failed");
+  exit(1);
 }
-$count = 20;
-if(isset($_GET["count"]))
-{
-  $count = $_GET["count"];
-}
-$abstract = "false";
-if(isset($_GET["abstract"]))
-{
-  $abstract = $_GET["abstract"];
-}
+$count = $_GET['count'];
+$abstract = $_GET['abstract'];
+//$rel_dir = "../csv/" . $dir . "/";
+$rel_dir = "./";
 
-$rel_dir = "./tfs.npz";
-
-putenv('LC_ALL=C.UTF-8');
 passthru("python3 wordassoc.py " . $q. " " . $rel_dir . " " . $count . " " . $abstract);
 ?>

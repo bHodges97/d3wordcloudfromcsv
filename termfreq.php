@@ -12,6 +12,5 @@ if(strpos($dir, ".")){
 //$rel_dir = "../csv/" . $dir . "/tfs.npz";
 $rel_dir = "'./tfs.npz'";
 
-putenv('LC_ALL=C.UTF-8');
 passthru("python3 termfreq.py " . $q . " " . $rel_dir);
 ?>

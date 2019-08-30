@@ -1,5 +1,5 @@
 module.exports = bh_wordcloud = class{
-	constructor(url="", tag="wordcloud", count=1000, abstract=false, width=600, height=600, stopwords=[]){
+	constructor(url="", tag="wordcloud", count=10, abstract=false, width=600, height=600, stopwords=[]){
 		require("d3-transition")
 		this.d3_select = require("d3-selection").select;
 		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
