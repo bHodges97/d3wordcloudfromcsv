@@ -1,6 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = bh_wordcloud = class{
-	constructor(url, tag, width, height){
+	constructor(url="", tag="wordcloud", count=1000, abstract=false, width=600, height=600, stopwords=[]){
 		require("d3-transition")
 		this.d3_select = require("d3-selection").select;
 		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
@@ -10,16 +10,28 @@ module.exports = bh_wordcloud = class{
 		this.div_wordcloud = this.d3_select("#"+tag);
 		this.width = width;
 		this.height = height;
+		var search  = this.div_wordcloud.append("input");
 		this.svg = this.div_wordcloud.append("svg")
 			.attr("width", width)
-		 	.attr("height", height)
+			.attr("height", height)
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
+		search.attr("id","bhwcInput").attr("placeholder","Search for word...");
+		search = document.querySelector("#bhwcInput");
+		search.addEventListener("keyup", event => {
+			if(event.key === "Enter") bh_wc.start(search.value);
+			event.preventDefault(); // No need to `return false;`.
+		});
+
 		this.div_papers = this.div_wordcloud.append("div");
-    	this.background = this.svg.append("g");
+		this.background = this.svg.append("g");
+		this.count = count;
+		this.abstract = abstract;
+		this.stopwords = stopwords;
+
 	}
 
 	start(word){
-		fetch("termfreq.php?word=\'"+word+"\'")
+		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url)
 			.then(response => response.text())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(data,this.width,this.height))
@@ -29,14 +41,14 @@ module.exports = bh_wordcloud = class{
 		var arr = data.split("\n");
 		var words = [];
 		var first = arr[0].split(",");
-	    var max_count = parseInt(first[1]);
+		var max_count = parseInt(first[1]);
 		//assume average word is length 5
 		var max_size = (this.width * 0.30) * (5 / first[0].length);
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
 			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
 			var count = parseInt(splitted[1]);
-			if(word.length > 2){
+			if(word.length > 2 && !this.stopwords.includes(word) ){
 				var scaled = count * (this.width/8) / max_count;
 				if(scaled > 0)words.push({text:word,size:scaled});
 				else break;
@@ -65,11 +77,11 @@ module.exports = bh_wordcloud = class{
 	draw(words,e) {
 		var vis = this.svg.selectAll("text").data(words,d=>d.text);
 		var dur = 1000;
-		
+
 		/*vis.exit().transition(dur)
 		  .style('fill-opacity', 1e-6)
 			.style("font-size",function(){return "1px"})
-		*/
+			*/
 		vis.exit().remove()
 
 		var n = vis.enter().append("text");
@@ -78,7 +90,7 @@ module.exports = bh_wordcloud = class{
 			.text(function(d){return d.text})
 			.on("click",(d,i)=>this.show_related(d,i));
 
-    	this.svg.selectAll("text").transition().duration(dur)
+		this.svg.selectAll("text").transition().duration(dur)
 			.style("font-family", function(d){return d.font})
 			.style("font-size", d=>d.size+"px")
 			.style("fill", (d,i) => this.colors[i % this.colors.length])
@@ -86,9 +98,9 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_related(d,i){
-		fetch('wordassoc.php?word=\''+d.text+'\'')
-		  .then(responce => responce.text())
-		  .then(text=>this.div_papers.html(text));
+		fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
+			.then(responce => responce.text())
+			.then(text=>this.div_papers.html(text));
 	}
 }
 
@@ -596,12 +608,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"d3-dispatch":4}],3:[function(require,module,exports){
-// https://d3js.org/d3-color/ v1.2.8 Copyright 2019 Mike Bostock
+// https://d3js.org/d3-color/ v1.3.0 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
-(factory((global.d3 = global.d3 || {})));
-}(this, (function (exports) { 'use strict';
+(global = global || self, factory(global.d3 = global.d3 || {}));
+}(this, function (exports) { 'use strict';
 
 function define(constructor, factory, prototype) {
   constructor.prototype = factory.prototype = prototype;
@@ -783,16 +795,30 @@ var named = {
 };
 
 define(Color, color, {
+  copy: function(channels) {
+    return Object.assign(new this.constructor, this, channels);
+  },
   displayable: function() {
     return this.rgb().displayable();
   },
-  hex: function() {
-    return this.rgb().hex();
-  },
-  toString: function() {
-    return this.rgb() + "";
-  }
+  hex: color_formatHex, // Deprecated! Use color.formatHex.
+  formatHex: color_formatHex,
+  formatHsl: color_formatHsl,
+  formatRgb: color_formatRgb,
+  toString: color_formatRgb
 });
+
+function color_formatHex() {
+  return this.rgb().formatHex();
+}
+
+function color_formatHsl() {
+  return hslConvert(this).formatHsl();
+}
+
+function color_formatRgb() {
+  return this.rgb().formatRgb();
+}
 
 function color(format) {
   var m;
@@ -805,7 +831,7 @@ function color(format) {
       : (m = reRgbaPercent.exec(format)) ? rgba(m[1] * 255 / 100, m[2] * 255 / 100, m[3] * 255 / 100, m[4]) // rgb(100%, 0%, 0%, 1)
       : (m = reHslPercent.exec(format)) ? hsla(m[1], m[2] / 100, m[3] / 100, 1) // hsl(120, 50%, 50%)
       : (m = reHslaPercent.exec(format)) ? hsla(m[1], m[2] / 100, m[3] / 100, m[4]) // hsla(120, 50%, 50%, 1)
-      : named.hasOwnProperty(format) ? rgbn(named[format])
+      : named.hasOwnProperty(format) ? rgbn(named[format]) // eslint-disable-line no-prototype-builtins
       : format === "transparent" ? new Rgb(NaN, NaN, NaN, 0)
       : null;
 }
@@ -855,18 +881,24 @@ define(Rgb, rgb, extend(Color, {
         && (-0.5 <= this.b && this.b < 255.5)
         && (0 <= this.opacity && this.opacity <= 1);
   },
-  hex: function() {
-    return "#" + hex(this.r) + hex(this.g) + hex(this.b);
-  },
-  toString: function() {
-    var a = this.opacity; a = isNaN(a) ? 1 : Math.max(0, Math.min(1, a));
-    return (a === 1 ? "rgb(" : "rgba(")
-        + Math.max(0, Math.min(255, Math.round(this.r) || 0)) + ", "
-        + Math.max(0, Math.min(255, Math.round(this.g) || 0)) + ", "
-        + Math.max(0, Math.min(255, Math.round(this.b) || 0))
-        + (a === 1 ? ")" : ", " + a + ")");
-  }
+  hex: rgb_formatHex, // Deprecated! Use color.formatHex.
+  formatHex: rgb_formatHex,
+  formatRgb: rgb_formatRgb,
+  toString: rgb_formatRgb
 }));
+
+function rgb_formatHex() {
+  return "#" + hex(this.r) + hex(this.g) + hex(this.b);
+}
+
+function rgb_formatRgb() {
+  var a = this.opacity; a = isNaN(a) ? 1 : Math.max(0, Math.min(1, a));
+  return (a === 1 ? "rgb(" : "rgba(")
+      + Math.max(0, Math.min(255, Math.round(this.r) || 0)) + ", "
+      + Math.max(0, Math.min(255, Math.round(this.g) || 0)) + ", "
+      + Math.max(0, Math.min(255, Math.round(this.b) || 0))
+      + (a === 1 ? ")" : ", " + a + ")");
+}
 
 function hex(value) {
   value = Math.max(0, Math.min(255, Math.round(value) || 0));
@@ -943,6 +975,14 @@ define(Hsl, hsl, extend(Color, {
     return (0 <= this.s && this.s <= 1 || isNaN(this.s))
         && (0 <= this.l && this.l <= 1)
         && (0 <= this.opacity && this.opacity <= 1);
+  },
+  formatHsl: function() {
+    var a = this.opacity; a = isNaN(a) ? 1 : Math.max(0, Math.min(1, a));
+    return (a === 1 ? "hsl(" : "hsla(")
+        + (this.h || 0) + ", "
+        + (this.s || 0) * 100 + "%, "
+        + (this.l || 0) * 100 + "%"
+        + (a === 1 ? ")" : ", " + a + ")");
   }
 }));
 
@@ -1136,17 +1176,17 @@ define(Cubehelix, cubehelix, extend(Color, {
 }));
 
 exports.color = color;
-exports.rgb = rgb;
+exports.cubehelix = cubehelix;
+exports.gray = gray;
+exports.hcl = hcl;
 exports.hsl = hsl;
 exports.lab = lab;
-exports.hcl = hcl;
 exports.lch = lch;
-exports.gray = gray;
-exports.cubehelix = cubehelix;
+exports.rgb = rgb;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
 
 },{}],4:[function(require,module,exports){
 // https://d3js.org/d3-dispatch/ v1.0.5 Copyright 2018 Mike Bostock
@@ -2081,12 +2121,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 },{"d3-color":3}],7:[function(require,module,exports){
-// https://d3js.org/d3-scale-chromatic/ v1.3.3 Copyright 2018 Mike Bostock
+// https://d3js.org/d3-scale-chromatic/ v1.5.0 Copyright 2019 Mike Bostock
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-interpolate'), require('d3-color')) :
 typeof define === 'function' && define.amd ? define(['exports', 'd3-interpolate', 'd3-color'], factory) :
-(factory((global.d3 = global.d3 || {}),global.d3,global.d3));
-}(this, (function (exports,d3Interpolate,d3Color) { 'use strict';
+(global = global || self, factory(global.d3 = global.d3 || {}, global.d3, global.d3));
+}(this, function (exports, d3Interpolate, d3Color) { 'use strict';
 
 function colors(specifier) {
   var n = specifier.length / 6 | 0, colors = new Array(n), i = 0;
@@ -2111,6 +2151,8 @@ var Set1 = colors("e41a1c377eb84daf4a984ea3ff7f00ffff33a65628f781bf999999");
 var Set2 = colors("66c2a5fc8d628da0cbe78ac3a6d854ffd92fe5c494b3b3b3");
 
 var Set3 = colors("8dd3c7ffffb3bebadafb807280b1d3fdb462b3de69fccde5d9d9d9bc80bdccebc5ffed6f");
+
+var Tableau10 = colors("4e79a7f28e2ce1575976b7b259a14fedc949af7aa1ff9da79c755fbab0ab");
 
 function ramp(scheme) {
   return d3Interpolate.interpolateRgbBasis(scheme[scheme.length - 1]);
@@ -2458,6 +2500,15 @@ var scheme$q = new Array(3).concat(
 
 var Oranges = ramp(scheme$q);
 
+function cividis(t) {
+  t = Math.max(0, Math.min(1, t));
+  return "rgb("
+      + Math.max(0, Math.min(255, Math.round(-4.54 - t * (35.34 - t * (2381.73 - t * (6402.7 - t * (7024.72 - t * 2710.57))))))) + ", "
+      + Math.max(0, Math.min(255, Math.round(32.49 + t * (170.73 + t * (52.82 - t * (131.46 - t * (176.58 - t * 67.37))))))) + ", "
+      + Math.max(0, Math.min(255, Math.round(81.24 + t * (442.36 - t * (2482.43 - t * (6167.24 - t * (6614.94 - t * 2475.67)))))))
+      + ")";
+}
+
 var cubehelix = d3Interpolate.interpolateCubehelixLong(d3Color.cubehelix(300, 0.5, 0.0), d3Color.cubehelix(-240, 0.5, 1.0));
 
 var warm = d3Interpolate.interpolateCubehelixLong(d3Color.cubehelix(-100, 0.75, 0.35), d3Color.cubehelix(80, 1.50, 0.8));
@@ -2488,6 +2539,15 @@ function sinebow(t) {
   return c$1 + "";
 }
 
+function turbo(t) {
+  t = Math.max(0, Math.min(1, t));
+  return "rgb("
+      + Math.max(0, Math.min(255, Math.round(34.61 + t * (1172.33 - t * (10793.56 - t * (33300.12 - t * (38394.49 - t * 14825.05))))))) + ", "
+      + Math.max(0, Math.min(255, Math.round(23.31 + t * (557.33 + t * (1225.33 - t * (3574.96 - t * (1073.77 + t * 707.56))))))) + ", "
+      + Math.max(0, Math.min(255, Math.round(27.2 + t * (3211.1 - t * (15327.97 - t * (27814 - t * (22569.18 - t * 6838.66)))))))
+      + ")";
+}
+
 function ramp$1(range) {
   var n = range.length;
   return function(t) {
@@ -2503,82 +2563,85 @@ var inferno = ramp$1(colors("00000401000501010601010802010a02020c02020e030210040
 
 var plasma = ramp$1(colors("0d088710078813078916078a19068c1b068d1d068e20068f2206902406912605912805922a05932c05942e05952f059631059733059735049837049938049a3a049a3c049b3e049c3f049c41049d43039e44039e46039f48039f4903a04b03a14c02a14e02a25002a25102a35302a35502a45601a45801a45901a55b01a55c01a65e01a66001a66100a76300a76400a76600a76700a86900a86a00a86c00a86e00a86f00a87100a87201a87401a87501a87701a87801a87a02a87b02a87d03a87e03a88004a88104a78305a78405a78606a68707a68808a68a09a58b0aa58d0ba58e0ca48f0da4910ea3920fa39410a29511a19613a19814a099159f9a169f9c179e9d189d9e199da01a9ca11b9ba21d9aa31e9aa51f99a62098a72197a82296aa2395ab2494ac2694ad2793ae2892b02991b12a90b22b8fb32c8eb42e8db52f8cb6308bb7318ab83289ba3388bb3488bc3587bd3786be3885bf3984c03a83c13b82c23c81c33d80c43e7fc5407ec6417dc7427cc8437bc9447aca457acb4679cc4778cc4977cd4a76ce4b75cf4c74d04d73d14e72d24f71d35171d45270d5536fd5546ed6556dd7566cd8576bd9586ada5a6ada5b69db5c68dc5d67dd5e66de5f65de6164df6263e06363e16462e26561e26660e3685fe4695ee56a5de56b5de66c5ce76e5be76f5ae87059e97158e97257ea7457eb7556eb7655ec7754ed7953ed7a52ee7b51ef7c51ef7e50f07f4ff0804ef1814df1834cf2844bf3854bf3874af48849f48948f58b47f58c46f68d45f68f44f79044f79143f79342f89441f89540f9973ff9983ef99a3efa9b3dfa9c3cfa9e3bfb9f3afba139fba238fca338fca537fca636fca835fca934fdab33fdac33fdae32fdaf31fdb130fdb22ffdb42ffdb52efeb72dfeb82cfeba2cfebb2bfebd2afebe2afec029fdc229fdc328fdc527fdc627fdc827fdca26fdcb26fccd25fcce25fcd025fcd225fbd324fbd524fbd724fad824fada24f9dc24f9dd25f8df25f8e125f7e225f7e425f6e626f6e826f5e926f5eb27f4ed27f3ee27f3f027f2f227f1f426f1f525f0f724f0f921"));
 
-exports.schemeCategory10 = category10;
+exports.interpolateBlues = Blues;
+exports.interpolateBrBG = BrBG;
+exports.interpolateBuGn = BuGn;
+exports.interpolateBuPu = BuPu;
+exports.interpolateCividis = cividis;
+exports.interpolateCool = cool;
+exports.interpolateCubehelixDefault = cubehelix;
+exports.interpolateGnBu = GnBu;
+exports.interpolateGreens = Greens;
+exports.interpolateGreys = Greys;
+exports.interpolateInferno = inferno;
+exports.interpolateMagma = magma;
+exports.interpolateOrRd = OrRd;
+exports.interpolateOranges = Oranges;
+exports.interpolatePRGn = PRGn;
+exports.interpolatePiYG = PiYG;
+exports.interpolatePlasma = plasma;
+exports.interpolatePuBu = PuBu;
+exports.interpolatePuBuGn = PuBuGn;
+exports.interpolatePuOr = PuOr;
+exports.interpolatePuRd = PuRd;
+exports.interpolatePurples = Purples;
+exports.interpolateRainbow = rainbow;
+exports.interpolateRdBu = RdBu;
+exports.interpolateRdGy = RdGy;
+exports.interpolateRdPu = RdPu;
+exports.interpolateRdYlBu = RdYlBu;
+exports.interpolateRdYlGn = RdYlGn;
+exports.interpolateReds = Reds;
+exports.interpolateSinebow = sinebow;
+exports.interpolateSpectral = Spectral;
+exports.interpolateTurbo = turbo;
+exports.interpolateViridis = viridis;
+exports.interpolateWarm = warm;
+exports.interpolateYlGn = YlGn;
+exports.interpolateYlGnBu = YlGnBu;
+exports.interpolateYlOrBr = YlOrBr;
+exports.interpolateYlOrRd = YlOrRd;
 exports.schemeAccent = Accent;
+exports.schemeBlues = scheme$l;
+exports.schemeBrBG = scheme;
+exports.schemeBuGn = scheme$9;
+exports.schemeBuPu = scheme$a;
+exports.schemeCategory10 = category10;
 exports.schemeDark2 = Dark2;
+exports.schemeGnBu = scheme$b;
+exports.schemeGreens = scheme$m;
+exports.schemeGreys = scheme$n;
+exports.schemeOrRd = scheme$c;
+exports.schemeOranges = scheme$q;
+exports.schemePRGn = scheme$1;
 exports.schemePaired = Paired;
 exports.schemePastel1 = Pastel1;
 exports.schemePastel2 = Pastel2;
+exports.schemePiYG = scheme$2;
+exports.schemePuBu = scheme$e;
+exports.schemePuBuGn = scheme$d;
+exports.schemePuOr = scheme$3;
+exports.schemePuRd = scheme$f;
+exports.schemePurples = scheme$o;
+exports.schemeRdBu = scheme$4;
+exports.schemeRdGy = scheme$5;
+exports.schemeRdPu = scheme$g;
+exports.schemeRdYlBu = scheme$6;
+exports.schemeRdYlGn = scheme$7;
+exports.schemeReds = scheme$p;
 exports.schemeSet1 = Set1;
 exports.schemeSet2 = Set2;
 exports.schemeSet3 = Set3;
-exports.interpolateBrBG = BrBG;
-exports.schemeBrBG = scheme;
-exports.interpolatePRGn = PRGn;
-exports.schemePRGn = scheme$1;
-exports.interpolatePiYG = PiYG;
-exports.schemePiYG = scheme$2;
-exports.interpolatePuOr = PuOr;
-exports.schemePuOr = scheme$3;
-exports.interpolateRdBu = RdBu;
-exports.schemeRdBu = scheme$4;
-exports.interpolateRdGy = RdGy;
-exports.schemeRdGy = scheme$5;
-exports.interpolateRdYlBu = RdYlBu;
-exports.schemeRdYlBu = scheme$6;
-exports.interpolateRdYlGn = RdYlGn;
-exports.schemeRdYlGn = scheme$7;
-exports.interpolateSpectral = Spectral;
 exports.schemeSpectral = scheme$8;
-exports.interpolateBuGn = BuGn;
-exports.schemeBuGn = scheme$9;
-exports.interpolateBuPu = BuPu;
-exports.schemeBuPu = scheme$a;
-exports.interpolateGnBu = GnBu;
-exports.schemeGnBu = scheme$b;
-exports.interpolateOrRd = OrRd;
-exports.schemeOrRd = scheme$c;
-exports.interpolatePuBuGn = PuBuGn;
-exports.schemePuBuGn = scheme$d;
-exports.interpolatePuBu = PuBu;
-exports.schemePuBu = scheme$e;
-exports.interpolatePuRd = PuRd;
-exports.schemePuRd = scheme$f;
-exports.interpolateRdPu = RdPu;
-exports.schemeRdPu = scheme$g;
-exports.interpolateYlGnBu = YlGnBu;
-exports.schemeYlGnBu = scheme$h;
-exports.interpolateYlGn = YlGn;
+exports.schemeTableau10 = Tableau10;
 exports.schemeYlGn = scheme$i;
-exports.interpolateYlOrBr = YlOrBr;
+exports.schemeYlGnBu = scheme$h;
 exports.schemeYlOrBr = scheme$j;
-exports.interpolateYlOrRd = YlOrRd;
 exports.schemeYlOrRd = scheme$k;
-exports.interpolateBlues = Blues;
-exports.schemeBlues = scheme$l;
-exports.interpolateGreens = Greens;
-exports.schemeGreens = scheme$m;
-exports.interpolateGreys = Greys;
-exports.schemeGreys = scheme$n;
-exports.interpolatePurples = Purples;
-exports.schemePurples = scheme$o;
-exports.interpolateReds = Reds;
-exports.schemeReds = scheme$p;
-exports.interpolateOranges = Oranges;
-exports.schemeOranges = scheme$q;
-exports.interpolateCubehelixDefault = cubehelix;
-exports.interpolateRainbow = rainbow;
-exports.interpolateWarm = warm;
-exports.interpolateCool = cool;
-exports.interpolateSinebow = sinebow;
-exports.interpolateViridis = viridis;
-exports.interpolateMagma = magma;
-exports.interpolateInferno = inferno;
-exports.interpolatePlasma = plasma;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
 
 },{"d3-color":3,"d3-interpolate":6}],8:[function(require,module,exports){
 // https://d3js.org/d3-selection/ v1.4.0 Copyright 2019 Mike Bostock
@@ -5279,7 +5342,7 @@ if (module && module.exports) {
 
 },{}],18:[function(require,module,exports){
 /*
-Copyright 2014 David Bau.
+Copyright 2019 David Bau.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

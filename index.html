@@ -14,19 +14,10 @@
 
 <body>
   	<script type="text/javascript" src="src/bundle.js"></script>
-	<input type="text" id="myInput" placeholder="Search for word..">
  	<div id="wordcloud"></div>
 	<script type="text/javascript">
 		var bh_wc = new bh_wordcloud("", "wordcloud", 500,500)
 		bh_wc.start("")
-		function bh_wc_search(){
-			word=document.getElementById("myInput").value;
-			bh_wc.start(word);
-		}
-		document.querySelector("#myInput").addEventListener("keyup", event => {
-			if(event.key === "Enter") bh_wc_search();
-			event.preventDefault(); // No need to `return false;`.
-		});
 	</script>
 </body>
 </html>

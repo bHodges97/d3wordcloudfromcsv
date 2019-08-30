@@ -5,10 +5,13 @@ import re
 from sys import argv
 from savenpz import load_npz
 
-X,vocab = load_npz('tfs.npz')
+word = argv[1].strip()
+path = argv[2]
+
+X,vocab = load_npz(path)
 limit = 1000
 
-if len(argv) == 1 or argv[1] == "":#No word specified
+if word == "":#No word specified
     tfs = np.asarray(X.sum(axis=0)).ravel()
     indices = (-tfs).argsort()[:limit]
     for i in indices:
