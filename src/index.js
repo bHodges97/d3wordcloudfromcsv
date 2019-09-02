@@ -57,7 +57,7 @@ module.exports = bh_wordcloud = class{
 			.then(data => this.show_wordcloud(wc,data))
 	}
 
-	load_data(data){//TODO: change php side to write array directly?
+	load_data(data){
 		var words = [];
 		var first = Object.keys(data)[0];
 		var max_count = data[first];
@@ -72,7 +72,6 @@ module.exports = bh_wordcloud = class{
 					break;
 			}
 		}
-		console.log(words.length)
 		return words
 	}
 
