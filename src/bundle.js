@@ -1,43 +1,64 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = bh_wordcloud = class{
-	constructor(url="", tag="wordcloud", count=1000, abstract=false, width=600, height=600, stopwords=[]){
+	constructor(url="", tag="wordcloud", count=10, abstract=false, width=600, height=600, stopwords=[]){
 		require("d3-transition")
-		this.d3_select = require("d3-selection").select;
+		this.d3 = require("d3-selection");
 		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
 		this.cloud = require("d3-cloud");
 		this.random = require("seedrandom")(0); //if not seeding use random=Math.random
 		this.url = url;
-		this.div_wordcloud = this.d3_select("#"+tag);
+		this.count = count;
+		this.abstract = abstract;
 		this.width = width;
 		this.height = height;
-		var search  = this.div_wordcloud.append("input");
-		this.svg = this.div_wordcloud.append("svg")
+		this.stopwords = stopwords;
+		this.wordclouds = [];
+
+		this.div_wordcloud = this.d3.select("#"+tag);
+		this.cluster([])
+			.then((data)=>{
+				for(var d in data){
+					this.createwc(data[d],width,height)
+					this.start(this.wordclouds[d])
+				}
+			})
+	}
+
+	createwc(papers,width,height){
+		var bhwc = {"width": width, "height": height};
+		bhwc.svg = this.div_wordcloud.append("svg")
 			.attr("width", width)
 			.attr("height", height)
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
-		search.attr("id","bhwcInput").attr("placeholder","Search for word...");
-		search = document.querySelector("#bhwcInput");
-		search.addEventListener("keyup", event => {
-			if(event.key === "Enter") bh_wc.start(search.value);
-			event.preventDefault(); // No need to `return false;`.
+
+		bhwc.search = this.div_wordcloud.append("input");
+		bhwc.search.attr("placeholder","Search for word...");
+		bhwc.search.on("keyup", () => {
+			if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
+			this.d3.event.preventDefault(); 
 		});
-
-		this.div_papers = this.div_wordcloud.append("div");
-		this.background = this.svg.append("g");
-		this.count = count;
-		this.abstract = abstract;
-		this.stopwords = stopwords;
-
+		bhwc.div_papers = this.div_wordcloud.append("div");
+		bhwc.papers = papers;
+		this.wordclouds.push(bhwc)
 	}
 
-	start(word){
-		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url)
+	cluster(papers){
+		return fetch("classify.php", {
+			method: "POST",
+			body: JSON.stringify({"dir": this.url, "papers": papers})
+		}).then(res => res.json());
+	}
+
+	start(wc){
+		var word = wc.search.value || '';
+		console.log(word);
+		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + wc.papers.join(","))
 			.then(response => response.text())
 			.then(text => this.load_data(text))
-			.then(data => this.show_wordcloud(data,this.width,this.height))
+			.then(data => this.show_wordcloud(wc,data))
 	}
 
-	load_data(data){
+	load_data(data){//TODO: change php side to write array directly?
 		var arr = data.split("\n");
 		var words = [];
 		var first = arr[0].split(",");
@@ -46,9 +67,9 @@ module.exports = bh_wordcloud = class{
 		var max_size = (this.width * 0.30) * (5 / first[0].length);
 		for (var i = 0; i < arr.length-1; i++) {
 			var splitted = arr[i].split(",");
-			var word = splitted[0]//.substring(1,splitted[0].length-1);//remove quotes
+			var word = splitted[0]
 			var count = parseInt(splitted[1]);
-			if(word.length > 2 && !this.stopwords.includes(word) ){
+			if(!this.stopwords.includes(word) ){
 				var scaled = count * (this.width/8) / max_count;
 				if(scaled > 0)words.push({text:word,size:scaled});
 				else break;
@@ -57,50 +78,49 @@ module.exports = bh_wordcloud = class{
 		return words
 	}
 
-	show_wordcloud(words,width,height){
+	show_wordcloud(wc, words){
 		//Draw Word
 		var random = this.random;
 		var wordcloud = this.cloud()
-			.size([width,height])
+			.size([wc.width,wc.height])
 			.random(this.random)
 			.words(words)
 			.padding(5)
 			.rotate( () =>  ~~(this.random() * 2) * 90)
 			.font("Impact")
 			.fontSize( d =>  d.size)
-			.on("end",(words,e)=>this.draw(words,e));
-
+			.on("end",(words,e)=>this.draw(words,e,wc));
 		wordcloud.start();
 		return wordcloud;
 	}
 
-	draw(words,e) {
-		var vis = this.svg.selectAll("text").data(words,d=>d.text);
+	draw(words,e,wc) {
+		var vis = wc.svg.selectAll("text").data(words,d=>d.text);
 		var dur = 1000;
 
 		/*vis.exit().transition(dur)
 		  .style('fill-opacity', 1e-6)
-			.style("font-size",function(){return "1px"})
-			*/
+		  .style("font-size",function(){return "1px"})
+		  */
 		vis.exit().remove()
 
 		var n = vis.enter().append("text");
 		n.attr("text-anchor", "middle")
 			.style("font-size", "1px")
 			.text(function(d){return d.text})
-			.on("click",(d,i)=>this.show_related(d,i));
+			.on("click",(d,i)=>this.show_related(d,i,wc.div_papers));
 
-		this.svg.selectAll("text").transition().duration(dur)
+		wc.svg.selectAll("text").transition().duration(dur)
 			.style("font-family", function(d){return d.font})
 			.style("font-size", d=>d.size+"px")
 			.style("fill", (d,i) => this.colors[i % this.colors.length])
 			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
 	}
 
-	show_related(d,i){
+	show_related(d,i,div){
 		fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
 			.then(responce => responce.text())
-			.then(text=>this.div_papers.html(text));
+			.then(text=>div.html(text));
 	}
 }
 

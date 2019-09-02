@@ -9,8 +9,11 @@ if(strpos($dir, ".")){
   print("Failed");
   exit(1);
 }
+$papers = $_GET['papers'];
+
 //$rel_dir = "../csv/" . $dir . "/tfs.npz";
 $rel_dir = "'./tfs.npz'";
+$cmd = "python3 termfreq.py " . $q . " " . $rel_dir . " " . $papers;
 
-passthru("python3 termfreq.py " . $q . " " . $rel_dir);
+passthru($cmd);
 ?>
