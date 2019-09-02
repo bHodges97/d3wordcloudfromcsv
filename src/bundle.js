@@ -15,13 +15,12 @@ module.exports = bh_wordcloud = class{
 		this.wordclouds = [];
 
 		this.div_wordcloud = this.d3.select("#"+tag);
-		this.cluster([])
-			.then((data)=>{
-				for(var d in data){
-					this.createwc(data[d],width,height)
-					this.start(this.wordclouds[d])
-				}
-			})
+		this.cluster([]).then((data)=>{
+			for(let d in data){
+				this.createwc(data[d],width,height)
+				this.start(this.wordclouds[d])
+			}
+		})
 	}
 
 	createwc(papers,width,height){
@@ -64,9 +63,9 @@ module.exports = bh_wordcloud = class{
 		var max_count = data[first];
 		var multiplier = this.width / 8 / max_count;
 
-		for (var word in data){
+		for (let word in data){
 			if(!this.stopwords.includes(word) ){
-				var scaled = data[word] * multiplier;
+				let scaled = Math.floor(data[word] * multiplier);
 				if(scaled > 2)
 					words.push({text:word,size:scaled});
 				else 
@@ -75,7 +74,8 @@ module.exports = bh_wordcloud = class{
 		}
 		return words
 	}
-
+	
+	//layout
 	show_wordcloud(wc, words){
 		//Draw Word
 		var random = this.random;
@@ -92,6 +92,7 @@ module.exports = bh_wordcloud = class{
 		return wordcloud;
 	}
 
+	//render
 	draw(words,e,wc) {
 		var vis = wc.svg.selectAll("text").data(words,d=>d.text);
 		var dur = 1000;
@@ -116,9 +117,15 @@ module.exports = bh_wordcloud = class{
 	}
 
 	show_related(d,i,div){
-		fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
-			.then(responce => responce.text())
-			.then(text=>div.html(text));
+		if(this.selected != d.text){
+			fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
+				.then(responce => responce.text())
+				.then(text=>div.html(text));
+			this.selected = d.text;
+		}else{
+			div.html("");
+			this.selected = '';
+		}
 	}
 }
 
