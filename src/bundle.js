@@ -53,28 +53,27 @@ module.exports = bh_wordcloud = class{
 		var word = wc.search.value || '';
 		console.log(word);
 		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + wc.papers.join(","))
-			.then(response => response.text())
+			.then(response => response.json())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(wc,data))
 	}
 
 	load_data(data){//TODO: change php side to write array directly?
-		var arr = data.split("\n");
 		var words = [];
-		var first = arr[0].split(",");
-		var max_count = parseInt(first[1]);
-		//assume average word is length 5
-		var max_size = (this.width * 0.30) * (5 / first[0].length);
-		for (var i = 0; i < arr.length-1; i++) {
-			var splitted = arr[i].split(",");
-			var word = splitted[0]
-			var count = parseInt(splitted[1]);
+		var first = Object.keys(data)[0];
+		var max_count = data[first];
+		var multiplier = this.width / 8 / max_count;
+
+		for (var word in data){
 			if(!this.stopwords.includes(word) ){
-				var scaled = count * (this.width/8) / max_count;
-				if(scaled > 0)words.push({text:word,size:scaled});
-				else break;
+				var scaled = data[word] * multiplier;
+				if(scaled > 2)
+					words.push({text:word,size:scaled});
+				else 
+					break;
 			}
 		}
+		console.log(words.length)
 		return words
 	}
 

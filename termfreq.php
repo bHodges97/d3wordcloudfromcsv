@@ -15,5 +15,6 @@ $papers = $_GET['papers'];
 $rel_dir = "'./tfs.npz'";
 $cmd = "python3 termfreq.py " . $q . " " . $rel_dir . " " . $papers;
 
+header('Content-Type: application/json');
 passthru($cmd);
 ?>

@@ -1,5 +1,6 @@
 import numpy as np
 import re
+import json
 from sys import argv,stdout
 from savenpz import load_npz
 
@@ -9,7 +10,7 @@ papers = argv[3]
 
 X,vocab = load_npz(path)
 limit = 1000
-out = ""
+
 if papers:
     papers = [int(x) for x in argv[3].split(",")]
     X = X[papers,:]
@@ -18,8 +19,7 @@ if papers:
 if word == "":#No word specified
     tfs = np.asarray(X.sum(axis=0)).ravel()
     indices = (-tfs).argsort()[:limit]
-    for i in indices:
-        out += f"{vocab[i]}, {tfs[i]}\n"
+    out = {vocab[i]:int(tfs[i]) for i in indices}
 else:
     words = []
     word = argv[1].strip().split(" ")
@@ -37,9 +37,8 @@ else:
         #papers = np.unique(X[:,words].nonzero()[0])
         tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
         indices = (-tfs).argsort()[:limit]
-        for i in indices:
-            out += f"{vocab[i]}, {tfs[i]}\n"
+        out = {vocab[i]:int(tfs[i]) for i in indices}
     else:
-        out = "Not found,1"
+        out = {"Not found",1}
 
-stdout.buffer.write(out.encode("utf-8"))
+stdout.buffer.write(json.dumps(out).encode("utf-8"))
