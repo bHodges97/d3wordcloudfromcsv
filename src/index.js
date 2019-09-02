@@ -11,40 +11,78 @@ module.exports = bh_wordcloud = class{
 		this.width = width;
 		this.height = height;
 		this.stopwords = stopwords;
-		this.wordclouds = [];
 
 		this.div_wordcloud = this.d3.select("#"+tag);
-		this.cluster([]).then((data)=>{
+		var rootwc = this.createwc([],width,height,this.div_wordcloud,true);
+		this.start(rootwc);
+		//this.cluster([],this.div_wordcloud,true);
+
+	}
+
+	cluster(papers,wc,div){
+		fetch("classify.php", {
+			method: "POST",
+			body: JSON.stringify({"dir": this.url, "papers": papers})
+		})
+			.then(res => res.json())
+			.then((data)=>{
 			for(let d in data){
-				this.createwc(data[d],width,height)
-				this.start(this.wordclouds[d])
+				let child = this.createwc(data[d],width,height,div);
+				wc.children.push(child);
+				child.parent = wc;
+				this.start(child);
 			}
 		})
 	}
 
-	createwc(papers,width,height){
+	createwc(papers,width,height,rootdiv,root = false){
 		var bhwc = {"width": width, "height": height};
-		bhwc.svg = this.div_wordcloud.append("svg")
+		var wcdiv = rootdiv.append("div");
+		var div = wcdiv.append("div");
+		wcdiv.style("border-style","dotted");
+		div.append("p").text(papers);
+		bhwc.children = []
+		bhwc.wcdiv = wcdiv,bhwc.div = div;
+
+		bhwc.svg = div.append("svg")
 			.attr("width", width)
 			.attr("height", height)
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 
-		bhwc.search = this.div_wordcloud.append("input");
+		bhwc.search = div.append("input");
 		bhwc.search.attr("placeholder","Search for word...");
 		bhwc.search.on("keyup", () => {
 			if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
 			this.d3.event.preventDefault(); 
 		});
-		bhwc.div_papers = this.div_wordcloud.append("div");
-		bhwc.papers = papers;
-		this.wordclouds.push(bhwc)
-	}
+		bhwc.zoom = div.append("button");
+		bhwc.zoom.text("cluster");
+		bhwc.zoom.on("click",()=>{
+			div.style("display","none")
+			if(bhwc.children.length){
+				bhwc.children.forEach((d)=>{
+					d.wcdiv.style("display","block")
+				})
+				bhwc.children.divstyle("display","block")
+			}else{
+				this.cluster(papers,bhwc,wcdiv);
+			}
+		});
+		if(!root){
+			bhwc.back = div.append("button");
+			bhwc.back.text("Back");
+			bhwc.back.on("click",()=>{
+				bhwc.parent.children.forEach((d)=>{
+					d.wcdiv.style("display","none")
+					bhwc.parent.div.style("display","block");
+				})
+			});
+		}
 
-	cluster(papers){
-		return fetch("classify.php", {
-			method: "POST",
-			body: JSON.stringify({"dir": this.url, "papers": papers})
-		}).then(res => res.json());
+
+		bhwc.div_papers = div.append("div");
+		bhwc.papers = papers;
+		return bhwc;
 	}
 
 	start(wc){

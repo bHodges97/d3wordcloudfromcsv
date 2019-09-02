@@ -6,15 +6,13 @@ from savenpz import load_npz
 
 word = argv[1].strip()
 path = argv[2]
-papers = argv[3]
 
 X,vocab = load_npz(path)
 limit = 1000
 
-if papers:
-    papers = [int(x) for x in argv[3].split(",")]
-    X = X[papers,:]
-
+if len(argv) == 4:
+    paperlist = [int(x) for x in argv[3].split(",")]
+    X = X[paperlist,:]
 
 if word == "":#No word specified
     tfs = np.asarray(X.sum(axis=0)).ravel()
