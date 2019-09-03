@@ -60,10 +60,10 @@ module.exports = bh_wordcloud = class{
 				bhwc.children.forEach((d)=>{
 					d.wcdiv.style("display","block")
 				})
-				bhwc.children.divstyle("display","block")
+				bhwc.div.style("display","none");
 			}else{
 				bhwc.zooming=true;
-				this.cluster(papers,bhwc,wcdiv,).then(()=>{div.style("display","none");bhwc.zooming=false});
+				this.cluster(papers,bhwc,wcdiv,).then(()=>{bhwc.div.style("display","none");bhwc.zooming=false});
 			}
 		});
 		if(!root){
@@ -134,7 +134,7 @@ module.exports = bh_wordcloud = class{
 	//render
 	draw(words,e,wc) {
 		var vis = wc.svg.selectAll("text").data(words,d=>d.text);
-		var dur = 1000;
+		var dur = 500;
 
 		/*vis.exit().transition(dur)
 		  .style('fill-opacity', 1e-6)
