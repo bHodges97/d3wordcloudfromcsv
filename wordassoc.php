@@ -12,7 +12,7 @@ if(strpos($dir, ".")){
 $count = $_GET['count'];
 $abstract = $_GET['abstract'];
 //$rel_dir = "../csv/" . $dir . "/";
-$rel_dir = "./";
+$rel_dir = "./data/";
 
 passthru("python3 wordassoc.py " . $q. " " . $rel_dir . " " . $count . " " . $abstract);
 ?>

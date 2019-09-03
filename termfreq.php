@@ -12,7 +12,7 @@ if(strpos($dir, ".")){
 $papers = $_GET['papers'];
 
 //$rel_dir = "../csv/" . $dir . "/tfs.npz";
-$rel_dir = "'./tfs.npz'";
+$rel_dir = "'./data/tfs.npz'";
 $cmd = "python3 termfreq.py " . $q . " " . $rel_dir . " " . $papers;
 
 header('Content-Type: application/json');
