@@ -32,7 +32,6 @@ else:
         if all(any(X[i,x]>0 for x in s) for s in words):
             papers.append(i)
     if papers:
-        #papers = np.unique(X[:,words].nonzero()[0])
         tfs = np.asarray(X[papers,:].sum(axis=0)).ravel()
         indices = (-tfs).argsort()[:limit]
         out = {vocab[i]:int(tfs[i]) for i in indices}

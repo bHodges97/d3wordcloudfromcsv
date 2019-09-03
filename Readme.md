@@ -18,3 +18,10 @@ $ cd src
 $ npm install
 $ ./node_modules/browserify/bin/cmd.js index.js > bundle.js
 ```
+## Auto build and minify
+Install watchify and terser from npm
+```
+$ cd src
+$ watchify index.js -vo 'terser -cm  > bundle.js'
+```
+

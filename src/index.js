@@ -2,7 +2,8 @@ module.exports = bh_wordcloud = class{
 	constructor(url="", tag="wordcloud", count=10, abstract=false, width=600, height=600, stopwords=[]){
 		require("d3-transition")
 		this.d3 = require("d3-selection");
-		this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
+		//this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
+		this.colors = ["#1f77b4","#ff7f0e", "#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"]
 		this.cloud = require("d3-cloud");
 		this.random = require("seedrandom")(0); //if not seeding use random=Math.random
 		this.url = url;
