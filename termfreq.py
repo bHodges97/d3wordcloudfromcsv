@@ -8,7 +8,7 @@ word = argv[1].strip()
 path = argv[2]
 
 X,vocab = load_npz(path)
-limit = 1000
+limit = 250
 
 if len(argv) == 4:
     paperlist = [int(x) for x in argv[3].split(",")]
@@ -38,4 +38,4 @@ else:
     else:
         out = {"not found":1}
 
-stdout.buffer.write(json.dumps(out).encode("utf-8"))
+stdout.buffer.write(json.dumps(out,separators=(',', ':')).encode("utf-8"))

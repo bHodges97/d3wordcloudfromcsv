@@ -16,8 +16,6 @@ module.exports = bh_wordcloud = class{
 		this.div_wordcloud = this.d3.select("#"+tag);
 		var rootwc = this.createwc([],width,height,this.div_wordcloud,true);
 		this.start(rootwc);
-		//this.nluster([],this.div_wordcloud,true);
-
 	}
 
 	cluster(papers,wc,div){
@@ -36,22 +34,25 @@ module.exports = bh_wordcloud = class{
 	}
 
 	createwc(papers,width,height,rootdiv,root = false){
-		var bhwc = {"width": width, "height": height};
 		var wcdiv = rootdiv.append("div")
 			.style("border-style","dotted")
 			.style("margin","5px 5px 5px 5px")
 		var div = wcdiv.append("div");
-		bhwc.children = []
-		bhwc.wcdiv = wcdiv,bhwc.div = div;
-
+		var bhwc = {
+			"width": width,
+			"height": height,
+			"papers": papers,
+			"children": [],
+			"wcdiv": wcdiv, //wrapper for self+children
+			"div": div, //wrapper for self
+			"zooming": false,
+		};
 		bhwc.search = div.append("input")
 			.attr("placeholder","Search for word...")
 			.on("keyup", () => {
 				if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
 				this.d3.event.preventDefault(); 
-		});div.append("p").text(papers);
-		
-		bhwc.zooming = false;
+		});
 		bhwc.zoom = div.append("button")
 			.text("cluster")
 			.on("click",()=>{
@@ -64,7 +65,10 @@ module.exports = bh_wordcloud = class{
 				bhwc.div.style("display","none");
 			}else{
 				bhwc.zooming=true;
-				this.cluster(papers,bhwc,wcdiv,).then(()=>{bhwc.div.style("display","none");bhwc.zooming=false});
+				this.cluster(papers,bhwc,wcdiv).then(()=>{
+					bhwc.div.style("display","none");
+					bhwc.zooming=false
+				});
 			}
 		});
 		if(!root){
@@ -84,8 +88,8 @@ module.exports = bh_wordcloud = class{
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 
 
-		bhwc.div_papers = div.append("div");
-		bhwc.papers = papers;
+		bhwc.div_papers = div.append("div")
+			.html("hello world");
 		return bhwc;
 	}
 
