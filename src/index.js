@@ -50,16 +50,20 @@ module.exports = bh_wordcloud = class{
 				this.d3.event.preventDefault(); 
 		});div.append("p").text(papers);
 		
+		bhwc.zooming = false;
 		bhwc.zoom = div.append("button")
 			.text("cluster")
 			.on("click",()=>{
-			if(bhwc.children.length){
+			if(bhwc.zooming){
+				return;
+			}else if(bhwc.children.length){
 				bhwc.children.forEach((d)=>{
 					d.wcdiv.style("display","block")
 				})
 				bhwc.children.divstyle("display","block")
 			}else{
-				this.cluster(papers,bhwc,wcdiv,).then(()=>div.style("display","none"));
+				bhwc.zooming=true;
+				this.cluster(papers,bhwc,wcdiv,).then(()=>{div.style("display","none");bhwc.zooming=false});
 			}
 		});
 		if(!root){
