@@ -37,6 +37,6 @@ else:
         indices = (-tfs).argsort()[:limit]
         out = {vocab[i]:int(tfs[i]) for i in indices}
     else:
-        out = {"Not found",1}
+        out = {"not found":1}
 
 stdout.buffer.write(json.dumps(out).encode("utf-8"))
