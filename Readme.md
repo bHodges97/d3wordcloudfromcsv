@@ -8,15 +8,6 @@ Produced as part of an internship under [Julian Kunkel](https://hps.vi4io.org/ab
 #### papers.csv
 id, HTML
 
-#### ~~freq_data.csv~~
-~~word, count~~
-
-#### related_papers.csv
-word, JSON of {paper_id: count, ...}
-
-#### vocab.npz
-numpy pickled word,id dict
-
 #### tfs.npz
 scipy csr matrix shaped(paper,word)
 
