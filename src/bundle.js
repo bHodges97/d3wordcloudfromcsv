@@ -37,28 +37,23 @@ module.exports = bh_wordcloud = class{
 
 	createwc(papers,width,height,rootdiv,root = false){
 		var bhwc = {"width": width, "height": height};
-		var wcdiv = rootdiv.append("div");
+		var wcdiv = rootdiv.append("div")
+			.style("border-style","dotted")
+			.style("margin","5px 5px 5px 5px")
 		var div = wcdiv.append("div");
-		wcdiv.style("border-style","dotted");
-		wcdiv.style("margin","5px 5px 5px 5px");
-		div.append("p").text(papers);
 		bhwc.children = []
 		bhwc.wcdiv = wcdiv,bhwc.div = div;
-
-		bhwc.svg = div.append("svg")
-			.attr("width", width)
-			.attr("height", height)
-			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 
 		bhwc.search = div.append("input")
 			.attr("placeholder","Search for word...")
 			.on("keyup", () => {
-			if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
-			this.d3.event.preventDefault(); 
-		});
-		bhwc.zoom = div.append("button");
-		bhwc.zoom.text("cluster");
-		bhwc.zoom.on("click",()=>{
+				if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
+				this.d3.event.preventDefault(); 
+		});div.append("p").text(papers);
+		
+		bhwc.zoom = div.append("button")
+			.text("cluster")
+			.on("click",()=>{
 			if(bhwc.children.length){
 				bhwc.children.forEach((d)=>{
 					d.wcdiv.style("display","block")
@@ -78,6 +73,11 @@ module.exports = bh_wordcloud = class{
 				})
 			});
 		}
+
+		bhwc.svg = div.append("svg")
+			.attr("width", width)
+			.attr("height", height)
+			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 
 
 		bhwc.div_papers = div.append("div");
