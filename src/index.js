@@ -14,8 +14,11 @@ module.exports = bh_wordcloud = class{
 		this.stopwords = stopwords;
 
 		this.div_wordcloud = this.d3.select("#"+tag);
-		var rootwc = this.createwc([],width,height,this.div_wordcloud,true);
-		this.start(rootwc);
+		fetch("requestpapers.php", {method: "POST",	body: JSON.stringify({"dir": this.url})})
+			.then(res=>res.json()).then((res)=>{
+			var rootwc = this.createwc(res.options,width,height,this.div_wordcloud,true);
+			this.start(rootwc);
+		})
 	}
 
 	cluster(papers,wc,div){
@@ -46,6 +49,7 @@ module.exports = bh_wordcloud = class{
 			"wcdiv": wcdiv, //wrapper for self+children
 			"div": div, //wrapper for self
 			"zooming": false,
+			"root": root,
 		};
 		bhwc.search = div.append("input")
 			.attr("placeholder","Search for word...")
@@ -90,12 +94,35 @@ module.exports = bh_wordcloud = class{
 
 		bhwc.div_papers = div.append("div")
 			.html("hello world");
+		//chose some papers to display.
+		var req = papers;
+		if(papers.length > 5){
+			req = [];
+			bhwc.more_papers = papers.slice();
+			for(let i = 0; i < 5; i++){
+				let index = this.randrange(bhwc.more_papers.length)
+				req.push(bhwc.more_papers.splice(index,1)[0]);
+			}
+		}
+		fetch("requestpapers.php",{method: "POST", body: JSON.stringify({"dir": this.url, "papers": req, "abstract": this.abstract})})
+			.then(res=>res.json())
+			.then(res=>{
+				bhwc.div_papers_default = "<ul>";
+				res.papers.forEach(d=>{bhwc.div_papers_default+="<li>"+d+"</li>"})
+				bhwc.div_papers_default += "<br><li><a href=#>show more</a></li></ul>";
+				bhwc.div_papers.html(bhwc.div_papers_default);
+			})
+
 		return bhwc;
+	}
+	randrange(max){
+		return this.random.int32() % max
 	}
 
 	start(wc){
 		var word = wc.search.node().value || '';
-		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + wc.papers.join(","))
+		var papers = wc.root?"":wc.papers.join(",")
+		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
 			.then(response => response.json())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(wc,data))
@@ -121,8 +148,6 @@ module.exports = bh_wordcloud = class{
 	
 	//layout
 	show_wordcloud(wc, words){
-		//Draw Word
-		var random = this.random;
 		var wordcloud = this.cloud()
 			.size([wc.width,wc.height])
 			.random(this.random)
@@ -131,27 +156,23 @@ module.exports = bh_wordcloud = class{
 			.rotate( () =>  ~~(this.random() * 2) * 90)
 			.font("Impact")
 			.fontSize( d =>  d.size)
-			.on("end",(words,e)=>this.draw(words,e,wc));
+			.on("end",words=>this.draw(words,wc));
 		wordcloud.start();
 		return wordcloud;
 	}
 
 	//render
-	draw(words,e,wc) {
+	draw(words,wc) {
 		var vis = wc.svg.selectAll("text").data(words,d=>d.text);
 		var dur = 500;
 
-		/*vis.exit().transition(dur)
-		  .style('fill-opacity', 1e-6)
-		  .style("font-size",function(){return "1px"})
-		  */
 		vis.exit().remove()
 
 		var n = vis.enter().append("text");
 		n.attr("text-anchor", "middle")
 			.style("font-size", "1px")
 			.text(function(d){return d.text})
-			.on("click",(d,i)=>this.show_related(d,i,wc.div_papers));
+			.on("click",(d,i)=>this.show_related(d,i,wc));
 
 		wc.svg.selectAll("text").transition().duration(dur)
 			.style("font-family", function(d){return d.font})
@@ -160,14 +181,14 @@ module.exports = bh_wordcloud = class{
 			.attr("transform", d =>"translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
 	}
 
-	show_related(d,i,div){
+	show_related(d,i,wc){
 		if(this.selected != d.text){
 			fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
 				.then(responce => responce.text())
-				.then(text=>div.html(text));
+				.then(text=> wc.div_papers.html(text));
 			this.selected = d.text;
 		}else{
-			div.html("");
+			wc.div_papers.html(wc.div_papers_default);
 			this.selected = '';
 		}
 	}

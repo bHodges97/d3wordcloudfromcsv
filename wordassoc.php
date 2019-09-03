@@ -10,7 +10,7 @@ if(strpos($dir, ".")){
   exit(1);
 }
 $count = $_GET['count'];
-$abstract = $_GET['abstract'];
+$abstract = var_export($_GET['abstract'], true);
 //$rel_dir = "../csv/" . $dir . "/";
 $rel_dir = "./data/";
 

@@ -3,9 +3,9 @@ import json
 import csv
 
 papers = None
-if len(argv) == 3 :
+if len(argv) == 4:
     abstract = argv[2].lower() == 'true'
-    papers = list(map(argv[3][1:-1].split(",")))
+    papers = list(map(int,argv[3][1:-1].split(",")))
 
 with open(argv[1],"r", encoding='utf-8') as f:
     reader = csv.reader(f)
@@ -16,7 +16,7 @@ with open(argv[1],"r", encoding='utf-8') as f:
             if paper in papers:
                 out[papers.index(paper)] = html
     else:
-        out = {"options": list(range(sum(1 for _ in reader)))}
+        out = {"options": list(range(sum(1 for _ in reader))), "error":argv}
         stdout.buffer.write(json.dumps(out,separators=(',', ':')).encode('utf-8'))
         exit()
 

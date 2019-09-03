@@ -11,7 +11,8 @@ header('Content-Type: application/json');
 
 $cmd ="python3 requestpapers.py " . $rel_dir;
 if( isset( $obj['papers'] ) ){
-  $cmd = $cmd . " " . $obj['abstract'] . " [" . implode(",",$obj['papers']) . "]" )
+  $abstract = var_export($obj['abstract'], true);
+  $cmd = $cmd . " " . $abstract . " [" . implode(",",$obj['papers']) . "]";
 }
 passthru($cmd);
 ?>
