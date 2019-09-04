@@ -14,5 +14,6 @@ $abstract = var_export($_GET['abstract'], true);
 //$rel_dir = "../csv/" . $dir . "/";
 $rel_dir = "./data/";
 
+header('Content-Type: application/json');
 passthru("python3 wordassoc.py " . $q. " " . $rel_dir . " " . $count . " " . $abstract);
 ?>

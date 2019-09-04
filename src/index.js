@@ -93,30 +93,74 @@ module.exports = bh_wordcloud = class{
 
 
 		bhwc.div_papers = div.append("div")
-			.html("hello world");
-		//chose some papers to display.
-		var req = papers;
-		if(papers.length > 5){
-			req = [];
-			bhwc.more_papers = papers.slice();
-			for(let i = 0; i < 5; i++){
-				let index = this.randrange(bhwc.more_papers.length)
-				req.push(bhwc.more_papers.splice(index,1)[0]);
-			}
-		}
-		fetch("requestpapers.php",{method: "POST", body: JSON.stringify({"dir": this.url, "papers": req, "abstract": this.abstract})})
-			.then(res=>res.json())
-			.then(res=>{
-				bhwc.div_papers_default = "<ul>";
-				res.papers.forEach(d=>{bhwc.div_papers_default+="<li>"+d+"</li>"})
-				bhwc.div_papers_default += "<br><li><a href=#>show more</a></li></ul>";
-				bhwc.div_papers.html(bhwc.div_papers_default);
-			})
+		bhwc.div_papers_list = bhwc.div_papers.append("ul")
+		
+		
+		
 
+		//chose some papers to display.
+		this.listpapers(bhwc,papers)
+	
 		return bhwc;
 	}
-	randrange(max){
-		return this.random.int32() % max
+
+
+	listpapers(bhwc,papers,counts){
+		bhwc.div_papers.html("")
+		bhwc.div_papers_list = bhwc.div_papers.append("ul")
+		
+		let span = bhwc.div_papers_list.append("span").attr("id","bhwcendmarker")
+		span.append("a").attr("id","bhwcmoremarker").attr("href","").text("show more").on("click",()=>{
+			this.d3.event.preventDefault();
+			bhwc.show_n(10);
+		})
+		span.append("text").text("\t");
+		span.append("a").attr("id","bhwclessmarker").attr("href","").text("show less").on("click",()=>{
+			this.d3.event.preventDefault();
+			let j = bhwc.indices.pop();
+			for(let i = 0;i < j;i++){
+				bhwc.div_papers_nodes.pop().remove();
+			}
+			if(bhwc.indices.length==1)bhwc.div_papers_list.select("#bhwclessmarker").style("display","none")
+		})
+		//this.shuffle(bhwc.papers);
+		bhwc.index = 0;
+		bhwc.div_papers_nodes = [];
+		bhwc.indices = [];
+
+		bhwc.show_n = function(n){
+			let shown = papers.slice(bhwc.index,bhwc.index+n);
+			let lindex = bhwc.index
+
+			fetch("requestpapers.php",{method: "POST", body: JSON.stringify({"dir": this.url, "papers": shown, "abstract": this.abstract})})
+				.then(res=>res.json())
+				.then(res=>{
+					for(let i = 0; i < res.papers.length; i++){//in keyword returns a string for iterator???
+						let html = res.papers[i]
+						if(counts){
+							html = "["+ counts[i+lindex] +" hits] " + html 
+						}
+						let n = bhwc.div_papers_list.insert("li","#bhwcendmarker").html(html)
+						bhwc.div_papers_nodes.push(n);
+					}
+				})
+
+			bhwc.index += shown.length
+			bhwc.indices.push(shown.length)
+			bhwc.div_papers_list.select("#bhwcmoremarker").style("display",bhwc.index==bhwc.papers.length?"none":"inline-block")
+			bhwc.div_papers_list.select("#bhwclessmarker").style("display",bhwc.indices.length==1?"none":"inline-block")
+		}
+
+		bhwc.show_n(10);
+	}
+
+
+	shuffle(a) {
+		for (let i = a.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[a[i], a[j]] = [a[j], a[i]];
+		}
+		return a;
 	}
 
 	start(wc){
@@ -184,11 +228,11 @@ module.exports = bh_wordcloud = class{
 	show_related(d,i,wc){
 		if(this.selected != d.text){
 			fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
-				.then(responce => responce.text())
-				.then(text=> wc.div_papers.html(text));
+				.then(res => res.json())
+				.then(res => this.listpapers(wc,res.papers,res.counts));
 			this.selected = d.text;
 		}else{
-			wc.div_papers.html(wc.div_papers_default);
+			this.listpapers(wc,wc.papers)
 			this.selected = '';
 		}
 	}

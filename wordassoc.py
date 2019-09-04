@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 import csv
+import json
 from sys import argv,stdout
 from savenpz import load_npz
 
@@ -14,29 +15,13 @@ X,vocab = load_npz(path+'tfs.npz')
 vocab = vocab.tolist()
 
 if word not in vocab:
-    print("<p>not found</p>")
+    print("{Error: 'not found'}")
     exit()
 idx = vocab.index(word)
 column = X[:,idx].toarray().ravel()
+limit = min(limit,np.count_nonzero(column))
 papers = (-column).argsort()[:limit] #sort and trim
 
-htmldict = dict()
-with open(path+"papers.csv","r", encoding='utf-8') as f:
-    reader = csv.reader(f)
-    for paper,html,_ in reader:
-        paper = int(paper)
-        if paper in papers:
-            htmldict[paper] = html
+out = {"papers": papers.tolist(), "counts": column[papers].tolist()}
 
-out = ""
-for paper in papers:
-    if not X[paper,idx]:
-        break
-    count = column[paper]
-    html = htmldict[paper]
-    if not abstract and ">Abstract<" in html:
-        i = html.index("<strong>Abstract")
-        html = html[:i]
-    out  += f"<li>[{count} hits] {html}</li>"
-out += "</ul>"
-stdout.buffer.write(out.encode("utf-8"))
+stdout.buffer.write(json.dumps(out,separators=(',', ':')).encode('utf-8'))
