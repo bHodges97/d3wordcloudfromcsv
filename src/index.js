@@ -16,27 +16,26 @@ module.exports = bh_wordcloud = class{
 		this.div_wordcloud = this.d3.select("#"+tag);
 		fetch("requestpapers.php", {method: "POST",	body: JSON.stringify({"dir": this.url})})
 			.then(res=>res.json()).then((res)=>{
-			var rootwc = this.createwc(res.options,width,height,this.div_wordcloud,true);
+			var rootwc = this.createwc(res.options,width,height,null,this.div_wordcloud);
 			this.start(rootwc);
 		})
 	}
 
-	cluster(papers,wc,div){
+	cluster(papers,wc){
 		return fetch("classify.php", {
 			method: "POST",
 			body: JSON.stringify({"dir": this.url, "papers": papers})
 		}).then(res => res.json())
 			.then((data)=>{
 				for(let d in data){
-					let child = this.createwc(data[d],width,height,div);
+					let child = this.createwc(data[d],width,height,wc,wc.wcdiv);
 					wc.children.push(child);
-					child.parent = wc;
 					this.start(child);
 				}
 			})
 	}
 
-	createwc(papers,width,height,rootdiv,root = false){
+	createwc(papers,width,height,parent,rootdiv){
 		var wcdiv = rootdiv.append("div")
 			.style("border-style","dotted")
 			.style("margin","5px 5px 5px 5px")
@@ -46,10 +45,10 @@ module.exports = bh_wordcloud = class{
 			"height": height,
 			"papers": papers,
 			"children": [],
+			"parent": parent,
 			"wcdiv": wcdiv, //wrapper for self+children
 			"div": div, //wrapper for self
 			"zooming": false,
-			"root": root,
 		};
 		bhwc.search = div.append("input")
 			.attr("placeholder","Search for word...")
@@ -69,13 +68,13 @@ module.exports = bh_wordcloud = class{
 				bhwc.div.style("display","none");
 			}else{
 				bhwc.zooming=true;
-				this.cluster(papers,bhwc,wcdiv).then(()=>{
+				this.cluster(papers,bhwc).then(()=>{
 					bhwc.div.style("display","none");
 					bhwc.zooming=false
 				});
 			}
 		});
-		if(!root){
+		if(!parent){
 			bhwc.back = div.append("button");
 			bhwc.back.text("Back");
 			bhwc.back.on("click",()=>{
@@ -89,15 +88,13 @@ module.exports = bh_wordcloud = class{
 		bhwc.svg = div.append("svg")
 			.attr("width", width)
 			.attr("height", height)
+			.style("border-style","ridge")
 			.append("g").attr("transform", "translate(" + [width>>1, height>>1] + ")");
 
 
 		bhwc.div_papers = div.append("div")
 		bhwc.div_papers_list = bhwc.div_papers.append("ul")
 		
-		
-		
-
 		//chose some papers to display.
 		this.listpapers(bhwc,papers)
 	
@@ -165,7 +162,7 @@ module.exports = bh_wordcloud = class{
 
 	start(wc){
 		var word = wc.search.node().value || '';
-		var papers = wc.root?"":wc.papers.join(",")
+		var papers = wc.parent?"":wc.papers.join(",")
 		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
 			.then(response => response.json())
 			.then(text => this.load_data(text))
