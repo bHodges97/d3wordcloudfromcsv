@@ -15,7 +15,7 @@ module.exports = bh_wordcloud = class{
 		this.tag = tag;
 
 		fetch("requestpapers.php", {method: "POST",	body: JSON.stringify({"dir": this.url})})
-			.then(res=>res.json()).then((res)=>{
+			.then(res=>res.json()).then((res)=>{ //use arrow functions instead of regular functions to preserve scope
 			var rootwc = this.createwc(res.options,width,height,null);
 			this.start(rootwc);
 		})
@@ -126,7 +126,7 @@ module.exports = bh_wordcloud = class{
 		bhwc.div_papers_nodes = [];
 		bhwc.indices = [];
 
-		bhwc.show_n = function(n){
+		bhwc.show_n = (n)=>{
 			let shown = papers.slice(bhwc.index,bhwc.index+n);
 			let lindex = bhwc.index
 
