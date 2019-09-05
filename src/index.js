@@ -12,11 +12,11 @@ module.exports = bh_wordcloud = class{
 		this.width = width;
 		this.height = height;
 		this.stopwords = stopwords;
+		this.tag = tag;
 
-		this.div_wordcloud = this.d3.select("#"+tag);
 		fetch("requestpapers.php", {method: "POST",	body: JSON.stringify({"dir": this.url})})
 			.then(res=>res.json()).then((res)=>{
-			var rootwc = this.createwc(res.options,width,height,null,this.div_wordcloud);
+			var rootwc = this.createwc(res.options,width,height,null);
 			this.start(rootwc);
 		})
 	}
@@ -28,14 +28,15 @@ module.exports = bh_wordcloud = class{
 		}).then(res => res.json())
 			.then((data)=>{
 				for(let d in data){
-					let child = this.createwc(data[d],width,height,wc,wc.wcdiv);
+					let child = this.createwc(data[d],width,height,wc);
 					wc.children.push(child);
 					this.start(child);
 				}
 			})
 	}
 
-	createwc(papers,width,height,parent,rootdiv){
+	createwc(papers,width,height,parent){
+		var rootdiv = parent?parent.wcdiv:this.d3.select('#'+this.tag)
 		var wcdiv = rootdiv.append("div")
 			.style("border-style","dotted")
 			.style("margin","5px 5px 5px 5px")
