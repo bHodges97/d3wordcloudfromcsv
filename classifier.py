@@ -58,6 +58,8 @@ class Classifier():
         km = None
         for k in range(kmin, kmax+1):
             kmeans = MiniBatchKMeans(n_clusters=k).fit(x)
+            if max(kmeans.labels_) == 0:
+                return kmeans
             newscore = silhouette_score(x, kmeans.labels_, metric = 'euclidean')
             if newscore > score:
                 score = newscore
