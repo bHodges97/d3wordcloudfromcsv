@@ -75,7 +75,7 @@ module.exports = bh_wordcloud = class{
 				});
 			}
 		});
-		if(!parent){
+		if(!!parent){
 			bhwc.back = div.append("button");
 			bhwc.back.text("Back");
 			bhwc.back.on("click",()=>{
@@ -163,7 +163,7 @@ module.exports = bh_wordcloud = class{
 
 	start(wc){
 		var word = wc.search.node().value || '';
-		var papers = wc.parent?"":wc.papers.join(",")
+		var papers = wc.parent?wc.papers.join(","):""
 		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
 			.then(response => response.json())
 			.then(text => this.load_data(text))
