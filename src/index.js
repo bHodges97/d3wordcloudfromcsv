@@ -94,17 +94,17 @@ module.exports = bh_wordcloud = class{
 
 
 		bhwc.div_papers = div.append("div")
-		bhwc.div_papers_list = bhwc.div_papers.append("ul")
 		
 		//chose some papers to display.
-		this.listpapers(bhwc,papers)
+		this.listpapers(bhwc,papers,"The papers shown in this wordcloud are:")
 	
 		return bhwc;
 	}
 
 
-	listpapers(bhwc,papers,counts){
+	listpapers(bhwc,papers,desc,counts){
 		bhwc.div_papers.html("")
+		bhwc.div_papers.append("p").html(desc)
 		bhwc.div_papers_list = bhwc.div_papers.append("ul")
 		
 		let span = bhwc.div_papers_list.append("span").attr("id","bhwcendmarker")
@@ -227,10 +227,10 @@ module.exports = bh_wordcloud = class{
 		if(this.selected != d.text){
 			fetch('wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
 				.then(res => res.json())
-				.then(res => this.listpapers(wc,res.papers,res.counts));
+				.then(res => this.listpapers(wc,res.papers,"The papers that include the word \"" + d.text + "\" are:",res.counts));
 			this.selected = d.text;
 		}else{
-			this.listpapers(wc,wc.papers)
+			this.listpapers(wc,wc.papers,"The papers shown in this wordcloud are:")
 			this.selected = '';
 		}
 	}
