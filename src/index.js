@@ -163,7 +163,7 @@ module.exports = bh_wordcloud = class{
 	start(wc){
 		var word = wc.search.node().value || '';
 		var papers = wc.parent?wc.papers.join(","):""
-		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
+		fetch("termfreq.php?word=\'" + word.toLowerCase() + "\'&dir=" + this.url + "&papers=" + papers)
 			.then(response => response.json())
 			.then(text => this.load_data(text))
 			.then(data => this.show_wordcloud(wc,data))
