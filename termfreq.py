@@ -12,7 +12,7 @@ limit = 250
 papers = []
 counts = []
 
-if len(argv) == 4:
+if len(argv) == 4 and argv[3]:
     paperlist = [int(x) for x in argv[3].split(",")]
 else:
     paperlist = list(range(X.shape[0]))

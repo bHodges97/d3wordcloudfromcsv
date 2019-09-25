@@ -16,7 +16,7 @@ module.exports = bh_wordcloud = class{
 		
 		var wc = this.createwc(width,height,null);
 
-		fetch("termfreq.php?word=\'" + startword + "\'&dir=" + this.url)
+		fetch("termfreq.php?word=\'" + startword + "\'&dir=" + this.url + "&papers=''")
 			.then(response => response.json())
 			.then(json => {
 				wc.papers = json.papers
