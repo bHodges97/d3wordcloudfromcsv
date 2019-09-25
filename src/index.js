@@ -91,6 +91,8 @@ module.exports = bh_wordcloud = class{
 				});
 			}
 		});
+		div.append("br")
+
 		if(!!parent){
 			bhwc.back = div.append("button");
 			bhwc.back.text("Back");
