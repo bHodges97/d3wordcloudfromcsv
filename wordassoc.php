@@ -1,16 +1,14 @@
 <?php
-$q = $_GET['word'];
-if(! isset($q)){
-  print("User word= and dir= as parameters");
-  exit(1);
-}
-$dir = $_GET['dir'];
+$data = file_get_contents('php://input');
+$obj = json_decode($data, true);
+$q = $obj['word'];
+$dir = $obj['dir'];
 if(strpos($dir, ".")){
   print("Failed");
   exit(1);
 }
-$count = $_GET['count'];
-$abstract = var_export($_GET['abstract'], true);
+$count = $obj['count'];
+$abstract = var_export($obj['abstract'], true);
 //$rel_dir = "../csv/" . $dir . "/";
 $rel_dir = "./data/";
 

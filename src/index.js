@@ -17,7 +17,10 @@ module.exports = bh_wordcloud = class{
 		var wc = this.createwc(width,height,null);
 		this.api = window.location.protocol + "//" + window.location.host + "/";
 
-		fetch(this.api+"termfreq.php?word=\'" + startword + "\'&dir=" + this.url + "&papers=''")
+		fetch(this.api+"termfreq.php", {
+			method: "POST",
+			body: JSON.stringify({"word": "'"+startword+"'", "dir": this.url, "papers": '',})
+		})
 			.then(response => response.json())
 			.then(json => {
 				wc.papers = json.papers
@@ -150,8 +153,10 @@ module.exports = bh_wordcloud = class{
 			let shown = papers.slice(bhwc.index,bhwc.index+n);
 			let lindex = bhwc.index
 
-			fetch(this.api+"requestpapers.php",{method: "POST", body: JSON.stringify({"dir": this.url, "papers": shown, "abstract": this.abstract})})
-				.then(res=>res.json())
+			fetch(this.api+"requestpapers.php",{
+				method: "POST",
+				body: JSON.stringify({"dir": this.url, "papers": shown, "abstract": this.abstract})
+			})	.then(res=>res.json())
 				.then(res=>{
 					for(let i = 0; i < res.papers.length; i++){//in keyword returns a string for iterator???
 						let html = res.papers[i]
@@ -184,8 +189,10 @@ module.exports = bh_wordcloud = class{
 		var word = wc.search.node().value.toLowerCase() || '';
 		var papers = wc.rootpapers.join(",")
 		this.selected = '';
-		fetch(this.api+"termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
-			.then(response => response.json())
+		fetch(this.api+"termfreq.php", {
+			method: "POST",
+			body: JSON.stringify({"word": "'"+word+"'", "dir": this.url, "papers": '',})
+		})	.then(response => response.json())
 			.then(json => {
 				wc.papers = json.papers
 				wc.rootpapers = json.papers
@@ -255,7 +262,10 @@ module.exports = bh_wordcloud = class{
 
 	show_related(d,i,wc){
 		if(this.selected != d.text){
-			fetch(this.api+'wordassoc.php?word=\''+d.text + "\'&dir=" + this.url + "&count=" + this.count + "&abstract=" + this.abstract)
+			fetch(this.api+"wordassoc.php", {
+				method: "POST",
+				body: JSON.stringify({"word": "'"+d.text+"'", "dir": this.url, "count": this.count, "abstract": this.abstract})
+			})
 				.then(res => res.json())
 				.then(res => this.listpapers(wc,res.papers,"The documents that include the word \"" + d.text + "\" are:",res.counts));
 			this.selected = d.text;
