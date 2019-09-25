@@ -1,5 +1,5 @@
 module.exports = bh_wordcloud = class{
-	constructor(url="", tag="wordcloud", count=10, abstract=false, width=600, height=600, stopwords=[]){
+	constructor(url="", tag="wordcloud", count=10, abstract=false, width=600, height=600, stopwords=[], startword = ""){
 		require("d3-transition")
 		this.d3 = require("d3-selection");
 		//this.colors = require("d3-scale-chromatic").schemeCategory10; //for more color schemes: https://github.com/d3/d3-scale-chromatic
@@ -13,29 +13,43 @@ module.exports = bh_wordcloud = class{
 		this.height = height;
 		this.stopwords = stopwords;
 		this.tag = tag;
+		
+		var wc = this.createwc(width,height,null);
 
-		fetch("requestpapers.php", {method: "POST",	body: JSON.stringify({"dir": this.url})})
-			.then(res=>res.json()).then((res)=>{ //use arrow functions instead of regular functions to preserve scope
-			var rootwc = this.createwc(res.options,width,height,null);
-			this.start(rootwc);
-		})
+		fetch("termfreq.php?word=\'" + startword + "\'&dir=" + this.url)
+			.then(response => response.json())
+			.then(json => {
+				wc.papers = json.papers
+				wc.rootpapers = json.papers
+				if(startword === ''){
+					this.listpapers(wc,json.papers,"The documents shown in this wordcloud are:")
+				}else{
+					this.listpapers(wc,json.papers,"The documents that include the word \"" + startword + "\" are:",json.counts);
+				}
+				return json.data
+			})
+			.then(json => this.load_data(json))
+			.then(data => this.show_wordcloud(wc,data))
+
 	}
 
-	cluster(papers,wc){
+	cluster(wc){
 		return fetch("classify.php", {
 			method: "POST",
-			body: JSON.stringify({"dir": this.url, "papers": papers})
+			body: JSON.stringify({"dir": this.url, "papers": wc.rootpapers})
 		}).then(res => res.json())
 			.then((data)=>{
 				for(let d in data){
-					let child = this.createwc(data[d],width,height,wc);
+					let child = this.createwc(width,height,wc);
 					wc.children.push(child);
+					child.papers = data[d]
+					child.rootpapers = data[d]
 					this.start(child);
 				}
 			})
 	}
 
-	createwc(papers,width,height,parent){
+	createwc(width,height,parent){
 		var rootdiv = parent?parent.wcdiv:this.d3.select('#'+this.tag)
 		var wcdiv = rootdiv.append("div")
 			.style("border-style","dotted")
@@ -44,7 +58,6 @@ module.exports = bh_wordcloud = class{
 		var bhwc = {
 			"width": width,
 			"height": height,
-			"papers": papers,
 			"children": [],
 			"parent": parent,
 			"wcdiv": wcdiv, //wrapper for self+children
@@ -53,10 +66,13 @@ module.exports = bh_wordcloud = class{
 		};
 		bhwc.search = div.append("input")
 			.attr("placeholder","Search for word...")
-			.on("keyup", () => {
-				if(this.d3.event.key === "Enter") bh_wc.start(bhwc);
+			.on("keyup",() => {
+				if(this.d3.event.key === "Enter") this.start(bhwc);
 				this.d3.event.preventDefault(); 
 		});
+		div.append("button").text("search")
+			.on("click",()=>this.start(bhwc))
+		
 		bhwc.zoom = div.append("button")
 			.text("cluster")
 			.on("click",()=>{
@@ -69,7 +85,7 @@ module.exports = bh_wordcloud = class{
 				bhwc.div.style("display","none");
 			}else{
 				bhwc.zooming=true;
-				this.cluster(papers,bhwc).then(()=>{
+				this.cluster(bhwc).then(()=>{
 					bhwc.div.style("display","none");
 					bhwc.zooming=false
 				});
@@ -95,9 +111,6 @@ module.exports = bh_wordcloud = class{
 
 		bhwc.div_papers = div.append("div")
 		
-		//chose some papers to display.
-		this.listpapers(bhwc,papers,"The document shown in this wordcloud are:")
-	
 		return bhwc;
 	}
 
@@ -106,6 +119,10 @@ module.exports = bh_wordcloud = class{
 		bhwc.div_papers.html("")
 		bhwc.div_papers.append("p").html(desc)
 		bhwc.div_papers_list = bhwc.div_papers.append("ul")
+		bhwc.papers = papers
+		if(papers.length == 0){
+			return
+		}
 		
 		let span = bhwc.div_papers_list.append("span").attr("id","bhwcendmarker")
 		span.append("a").attr("id","bhwcmoremarker").attr("href","").text("show more").on("click",()=>{
@@ -161,11 +178,22 @@ module.exports = bh_wordcloud = class{
 	}
 
 	start(wc){
-		var word = wc.search.node().value || '';
-		var papers = wc.parent?wc.papers.join(","):""
-		fetch("termfreq.php?word=\'" + word.toLowerCase() + "\'&dir=" + this.url + "&papers=" + papers)
+		var word = wc.search.node().value.toLowerCase() || '';
+		var papers = wc.rootpapers.join(",")
+		this.selected = '';
+		fetch("termfreq.php?word=\'" + word + "\'&dir=" + this.url + "&papers=" + papers)
 			.then(response => response.json())
-			.then(text => this.load_data(text))
+			.then(json => {
+				wc.papers = json.papers
+				wc.rootpapers = json.papers
+				if(word === ''){
+					this.listpapers(wc,json.papers,"The documents shown in this wordcloud are:")
+				}else{
+					this.listpapers(wc,json.papers,"The documents that include the word \"" + word + "\" are:",json.counts);
+				}
+				return json.data
+			})
+			.then(json => this.load_data(json))
 			.then(data => this.show_wordcloud(wc,data))
 	}
 
@@ -229,7 +257,7 @@ module.exports = bh_wordcloud = class{
 				.then(res => this.listpapers(wc,res.papers,"The documents that include the word \"" + d.text + "\" are:",res.counts));
 			this.selected = d.text;
 		}else{
-			this.listpapers(wc,wc.papers,"The documents shown in this wordcloud are:")
+			this.listpapers(wc,wc.rootpapers,"The documents shown in this wordcloud are:")
 			this.selected = '';
 		}
 	}
